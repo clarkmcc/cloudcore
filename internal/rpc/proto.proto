@@ -23,11 +23,13 @@ message AuthenticateRequest {
 
   string pre_shared_key = 2; // The pre-shared key used for authentication if the flow is PRE_SHARED_KEY.
   string token = 3; // The token used for authentication if the flow is TOKEN.
+  SystemMetadata system_metadata = 4;
 }
 
 // AuthenticateResponse is the response message for the Authenticate method.
 message AuthenticateResponse {
-  string token = 1; // The authentication token returned upon successful authentication.
+  string agent_id = 1;
+  string token = 2; // The authentication token returned upon successful authentication.
 }
 
 message PingRequest {}

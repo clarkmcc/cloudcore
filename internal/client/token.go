@@ -29,6 +29,7 @@ import (
 	"github.com/clarkmcc/cloudcore/internal/agentdb"
 	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
+	"github.com/clarkmcc/cloudcore/internal/sysinfo"
 	"github.com/clarkmcc/cloudcore/internal/token"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -84,6 +85,12 @@ func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *agentdb.Aut
 		}
 	default:
 		return nil, fmt.Errorf("must have a pre-shared key or an existing token to authenticate")
+	}
+
+	var err error
+	req.SystemMetadata, err = sysinfo.BuildSystemMetadata(ctx, m.db, m.logger)
+	if err != nil {
+		return nil, err
 	}
 
 	c, err := m.client.getAuthClient(ctx)

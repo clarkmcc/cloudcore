@@ -22,23 +22,40 @@ func (s *AuthService) Ping(_ context.Context, _ *rpc.PingRequest) (*rpc.PingResp
 	return &rpc.PingResponse{}, nil
 }
 
-func (s *AuthService) Authenticate(_ context.Context, req *rpc.AuthenticateRequest) (*rpc.AuthenticateResponse, error) {
+func (s *AuthService) Authenticate(ctx context.Context, req *rpc.AuthenticateRequest) (*rpc.AuthenticateResponse, error) {
 	switch req.Flow {
 	case rpc.AuthenticateRequest_TOKEN:
+		// when using a token, the agent must have already been authenticated
+		// and will already exist in the database. We issue a token as long as
+		// the current token is valid.
 		err := s.signer.ValidateToken(req.Token)
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, err.Error())
 		}
+		tk, err := s.signer.NewToken()
+		if err != nil {
+			return nil, status.Error(codes.Unauthenticated, err.Error())
+		}
+		return &rpc.AuthenticateResponse{
+			Token: tk,
+		}, nil
 	case rpc.AuthenticateRequest_PRE_SHARED_KEY:
 		// todo: lookup pre-shared key
+		agentID, err := s.db.AuthenticateAgent(ctx, req.GetPreSharedKey(), req.GetSystemMetadata())
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		tk, err := s.signer.NewToken()
+		if err != nil {
+			return nil, status.Error(codes.Unauthenticated, err.Error())
+		}
+		return &rpc.AuthenticateResponse{
+			AgentId: agentID,
+			Token:   tk,
+		}, nil
+	default:
+		return nil, status.Error(codes.InvalidArgument, "invalid authentication flow")
 	}
-	tk, err := s.signer.NewToken()
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, err.Error())
-	}
-	return &rpc.AuthenticateResponse{
-		Token: tk,
-	}, nil
 }
 
 func NewAuthService(config *config.ServerConfig, signer *token.Signer, db database.Database) *AuthService {
