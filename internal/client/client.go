@@ -55,19 +55,18 @@ func (c *Client) Ping(ctx context.Context) error {
 	return err
 }
 
-func (c *Client) UploadMetadata(ctx context.Context, metadata *rpc.SystemMetadata) error {
+func (c *Client) UploadMetadata(ctx context.Context, metadata *rpc.SystemMetadata) (*rpc.UploadMetadataResponse, error) {
 	ctx, err := c.getAuthContext(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	client, err := c.getAgentClient(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	_, err = client.UploadMetadata(ctx, &rpc.UploadMetadataRequest{
+	return client.UploadMetadata(ctx, &rpc.UploadMetadataRequest{
 		SystemMetadata: metadata,
 	})
-	return err
 }
 
 func (c *Client) getAuthClient(ctx context.Context) (rpc.AuthenticationClient, error) {

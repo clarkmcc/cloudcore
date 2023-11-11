@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
 	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/clarkmcc/cloudcore/internal/token"
@@ -12,6 +13,7 @@ import (
 type AuthService struct {
 	config *config.ServerConfig
 	signer *token.Signer
+	db     database.Database
 
 	rpc.UnimplementedAuthenticationServer
 }
@@ -39,9 +41,10 @@ func (s *AuthService) Authenticate(_ context.Context, req *rpc.AuthenticateReque
 	}, nil
 }
 
-func NewAuthService(config *config.ServerConfig, signer *token.Signer) *AuthService {
+func NewAuthService(config *config.ServerConfig, signer *token.Signer, db database.Database) *AuthService {
 	return &AuthService{
 		signer: signer,
 		config: config,
+		db:     db,
 	}
 }

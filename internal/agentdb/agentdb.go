@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/clarkmcc/cloudcore/internal/config"
-	"github.com/google/uuid"
 )
 
 var (
@@ -23,24 +22,7 @@ type AgentDB interface {
 	SaveAgentID(ctx context.Context, agentID string) error
 }
 
-func New(ctx context.Context, cfg *config.AgentConfig) (AgentDB, error) {
-	db, err := newDB(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("new db: %w", err)
-	}
-
-	// If we don't have an Agent ID, then generate one
-	id, err := db.AgentID(ctx)
-	if err != nil && !errors.Is(err, ErrNoAgentID) {
-		return nil, err
-	}
-	if len(id) > 0 {
-		return db, nil
-	}
-	return db, db.SaveAgentID(ctx, uuid.New().String())
-}
-
-func newDB(cfg *config.AgentConfig) (AgentDB, error) {
+func New(cfg *config.AgentConfig) (AgentDB, error) {
 	switch cfg.Database.Flavor {
 	case config.AgentDatabaseFlavorMemory:
 		return newMemoryDB()

@@ -12,11 +12,16 @@ func init() {
 		Name:     "metadata",
 		Schedule: tasks.Interval(10 * time.Second),
 		Action: func(ctx context.Context) error {
-			md, err := sysinfo.BuildSystemMetadata(ctx, tasks.AgentDB(ctx), tasks.Logger(ctx))
+			db := tasks.AgentDB(ctx)
+			md, err := sysinfo.BuildSystemMetadata(ctx, db, tasks.Logger(ctx))
 			if err != nil {
 				return err
 			}
-			return tasks.Client(ctx).UploadMetadata(ctx, md)
+			res, err := tasks.Client(ctx).UploadMetadata(ctx, md)
+			if err != nil {
+				return err
+			}
+			return db.SaveAgentID(ctx, res.GetAgentId())
 		},
 	})
 }

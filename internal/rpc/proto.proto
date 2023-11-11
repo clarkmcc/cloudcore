@@ -43,16 +43,20 @@ message UploadMetadataRequest {
   SystemMetadata system_metadata = 1;
 }
 
-message UploadMetadataResponse {}
+message UploadMetadataResponse {
+  string agent_id = 1;
+}
 
 message SystemMetadata {
   message Identifiers {
+    string agent_identifier = 1;
     // Some identifier that is unique to the host. This can be the system uuid, but
     // sometimes that's not unique for IoT devices all running the same system image
     // for example, so it's more abstract to support multiple methods of host identification.
-    string agent_identifier = 1;
     string host_identifier = 2;
-    string system_uuid = 3;
+    // This is the actual host ID provided by the operating system, may not be unique
+    // as noted above.
+    string host_id = 3;
     string hostname = 4;
     string public_ip_address = 5;
   }

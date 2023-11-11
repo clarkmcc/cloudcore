@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/server"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/services"
 	"github.com/clarkmcc/cloudcore/internal/config"
@@ -16,6 +17,7 @@ func main() {
 	app := fx.New(
 		fx.Provide(config.NewServerConfig),
 		fx.Provide(token.NewSigner),
+		fx.Provide(database.New),
 		fx.Provide(services.NewAuthService),
 		fx.Provide(services.NewAgentManagerService),
 		fx.Provide(server.Listener),
@@ -27,6 +29,9 @@ func main() {
 		fx.Provide(server.New),
 		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: logger}
+		}),
+		fx.Invoke(func(db database.Database) error {
+			return db.Migrate()
 		}),
 		fx.Invoke(func(_ *grpc.Server) {}),
 	)

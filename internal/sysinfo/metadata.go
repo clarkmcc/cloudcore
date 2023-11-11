@@ -2,6 +2,7 @@ package sysinfo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/clarkmcc/cloudcore/internal/agentdb"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
@@ -25,14 +26,14 @@ func BuildSystemMetadata(ctx context.Context, db agentdb.AgentDB, logger *zap.Lo
 	s.Identifiers = &rpc.SystemMetadata_Identifiers{}
 	var err error
 	s.Identifiers.AgentIdentifier, err = db.AgentID(ctx)
-	if err != nil {
+	if err != nil && !errors.Is(err, agentdb.ErrNoAgentID) {
 		return nil, err
 	}
-	s.Identifiers.SystemUuid, err = host.HostIDWithContext(ctx)
+	s.Identifiers.HostId, err = host.HostIDWithContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("getting host id: %w", err)
 	}
-	s.Identifiers.HostIdentifier = s.Identifiers.SystemUuid // todo: using system uuid as default, support pluggable identifier
+	s.Identifiers.HostIdentifier = s.Identifiers.HostId // todo: using system uuid as default, support pluggable identifier
 	s.Identifiers.Hostname, err = os.Hostname()
 	if err != nil {
 		return nil, fmt.Errorf("getting hostname: %w", err)
