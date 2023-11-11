@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+option go_package = "github.com/clarkmcc/cloudcore/internal/rpc;rpc";
+
+// AuthService defines a gRPC service for authentication purposes.
+service Authentication {
+  // Authenticate is a method in AuthService to authenticate users.
+  // It takes an AuthenticateRequest and returns an AuthenticateResponse.
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+// AuthenticateRequest is the request message for the Authenticate method.
+message AuthenticateRequest {
+  // Flow defines the type of authentication method being used.
+  // Currently, only PRE_SHARED_KEY is supported.
+  enum Flow {
+    PRE_SHARED_KEY = 0; // Use a pre-shared key for authentication.
+    TOKEN = 1;
+  }
+  Flow flow = 1; // Required field indicating the authentication flow type.
+
+  string pre_shared_key = 2; // The pre-shared key used for authentication if the flow is PRE_SHARED_KEY.
+  string token = 3; // The token used for authentication if the flow is TOKEN.
+}
+
+// AuthenticateResponse is the response message for the Authenticate method.
+message AuthenticateResponse {
+  string token = 1; // The authentication token returned upon successful authentication.
+}
+
+message PingRequest {}
+message PingResponse {}
+
+service AgentManager {
+  rpc UploadMetadata(UploadMetadataRequest) returns (UploadMetadataResponse);
+
+  rpc Notifications(stream ClientNotification) returns (stream ServerNotification);
+}
+
+message UploadMetadataRequest {
+  SystemMetadata system_metadata = 1;
+}
+
+message UploadMetadataResponse {}
+
+message SystemMetadata {
+  message Identifiers {
+    string identifier = 1;
+    string system_uuid = 2;
+    string hostname = 3;
+    string public_ip_address = 4;
+  }
+  message OperatingSystem {
+    string name = 1;
+    string family = 2;
+    string version = 3;
+  }
+  message Kernel {
+    optional string name = 1;
+    string version = 2;
+  }
+  message CPU {
+    string architecture = 1;
+    string model = 2;
+    string cores = 3;
+    string threads = 4;
+  }
+
+  Identifiers identifiers = 1;
+  OperatingSystem os = 2;
+  Kernel kernel = 3;
+  CPU cpu = 4;
+}
+
+message ClientNotification {
+  enum Type {
+    UNKNOWN = 0;
+    AGENT_STARTUP = 1;
+    AGENT_SHUTDOWN = 2;
+  }
+}
+
+message ServerNotification {
+  enum Type {
+    UNKNOWN = 0;
+  }
+}

@@ -1,0 +1,3 @@
+preSharedKey: abc
+logging:
+  level: debug
