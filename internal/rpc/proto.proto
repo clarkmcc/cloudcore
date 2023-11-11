@@ -47,10 +47,14 @@ message UploadMetadataResponse {}
 
 message SystemMetadata {
   message Identifiers {
-    string identifier = 1;
-    string system_uuid = 2;
-    string hostname = 3;
-    string public_ip_address = 4;
+    // Some identifier that is unique to the host. This can be the system uuid, but
+    // sometimes that's not unique for IoT devices all running the same system image
+    // for example, so it's more abstract to support multiple methods of host identification.
+    string agent_identifier = 1;
+    string host_identifier = 2;
+    string system_uuid = 3;
+    string hostname = 4;
+    string public_ip_address = 5;
   }
   message OperatingSystem {
     string name = 1;
@@ -58,14 +62,12 @@ message SystemMetadata {
     string version = 3;
   }
   message Kernel {
-    optional string name = 1;
+    string arch = 1;
     string version = 2;
   }
   message CPU {
-    string architecture = 1;
-    string model = 2;
-    string cores = 3;
-    string threads = 4;
+    string model = 1;
+    int32 cores = 2;
   }
 
   Identifiers identifiers = 1;

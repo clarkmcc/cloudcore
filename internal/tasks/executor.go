@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"github.com/clarkmcc/cloudcore/internal/agentdb"
 	"github.com/clarkmcc/cloudcore/internal/client"
 	"go.uber.org/zap"
 	"gopkg.in/tomb.v2"
@@ -13,6 +14,7 @@ type Executor struct {
 	tomb     *tomb.Tomb
 	logger   *zap.Logger
 	client   *client.Client
+	db       agentdb.AgentDB
 }
 
 func (e *Executor) Initialize() {
@@ -53,12 +55,13 @@ func (e *Executor) execute(task *Task) error {
 	return task.Action(e.executionContext(context.Background(), task))
 }
 
-func NewExecutor(tomb *tomb.Tomb, logger *zap.Logger, client *client.Client) *Executor {
+func NewExecutor(tomb *tomb.Tomb, db agentdb.AgentDB, logger *zap.Logger, client *client.Client) *Executor {
 	e := Executor{
 		registry: &DefaultRegistry,
 		tomb:     tomb,
 		logger:   logger.Named("executor"),
 		client:   client,
+		db:       db,
 	}
 	return &e
 }
