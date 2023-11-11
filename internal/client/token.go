@@ -31,6 +31,8 @@ import (
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/clarkmcc/cloudcore/internal/token"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"time"
 )
 
@@ -49,7 +51,7 @@ func (m *tokenManager) getAuthToken(ctx context.Context) (string, error) {
 	if err != nil && !errors.Is(err, agentdb.ErrAuthTokenNotFound) {
 		return "", err
 	}
-	if tk != nil && (!isExpired(tk.Expiration) || !isExpiringSoon(time.Now(), tk.Expiration, tk.Duration)) {
+	if tk != nil && !isExpired(tk.Expiration) && !isExpiringSoon(time.Now(), tk.Expiration, tk.Duration) {
 		return tk.Token, nil
 	}
 	tk, err = m.newToken(ctx, tk)
@@ -90,6 +92,19 @@ func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *agentdb.Aut
 	}
 	res, err := c.Authenticate(ctx, &req)
 	if err != nil {
+		// If we got an unauthenticated error from the server and tried using our
+		// existing token, it probably means the existing token is expired, so let's
+		// revert back to the pre-shared key.
+		//
+		// This is a recursive call, but we know we can't get into an infinite loop
+		// because the req.Flow will never be TOKEN if there's no auth token provided
+		// which we're not providing.
+		if s, ok := status.FromError(err); ok && s.Code() == codes.Unauthenticated {
+			if req.Flow == rpc.AuthenticateRequest_TOKEN {
+				m.logger.Debug("existing token is expired, reverting to pre-shared key")
+				return m.newToken(ctx, nil)
+			}
+		}
 		return nil, err
 	}
 	exp, err := token.GetExpiration(res.Token)

@@ -20,7 +20,16 @@ func (s *AuthService) Ping(_ context.Context, _ *rpc.PingRequest) (*rpc.PingResp
 	return &rpc.PingResponse{}, nil
 }
 
-func (s *AuthService) Authenticate(context.Context, *rpc.AuthenticateRequest) (*rpc.AuthenticateResponse, error) {
+func (s *AuthService) Authenticate(_ context.Context, req *rpc.AuthenticateRequest) (*rpc.AuthenticateResponse, error) {
+	switch req.Flow {
+	case rpc.AuthenticateRequest_TOKEN:
+		err := s.signer.ValidateToken(req.Token)
+		if err != nil {
+			return nil, status.Error(codes.Unauthenticated, err.Error())
+		}
+	case rpc.AuthenticateRequest_PRE_SHARED_KEY:
+		// todo: lookup pre-shared key
+	}
 	tk, err := s.signer.NewToken()
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
