@@ -3,7 +3,7 @@ package cockroachdb
 import (
 	"embed"
 	"errors"
-	"github.com/clarkmcc/cloudcore/internal/config"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/cockroachdb"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
@@ -40,7 +40,7 @@ func (d *Database) Migrate() error {
 	return nil
 }
 
-func New(config *config.ServerConfig) (*Database, error) {
+func New(config *config.Config) (*Database, error) {
 	db, err := sqlx.Open("postgres", config.Database.ConnectionString)
 	if err != nil {
 		return nil, err

@@ -10,6 +10,7 @@ import (
 	_ "github.com/clarkmcc/cloudcore/internal/tasks/registered"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 	"gopkg.in/tomb.v2"
 	"os"
 	"os/signal"
@@ -28,7 +29,9 @@ var cmd = &cobra.Command{
 			fx.Provide(func(config *config.Config) *config.Logging {
 				return &config.Logging
 			}),
-			fx.Provide(logger.New),
+			fx.Provide(func(config *config.Config) *zap.Logger {
+				return logger.New(config.Logging.Level, config.Logging.Debug)
+			}),
 			fx.Provide(agentdb.New),
 			fx.Provide(client.New),
 			fx.Provide(tasks.NewExecutor),

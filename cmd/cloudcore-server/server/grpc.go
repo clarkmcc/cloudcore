@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/services"
-	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -12,9 +12,9 @@ import (
 	"strconv"
 )
 
-func Listener(config *config.ServerConfig, logger *zap.Logger) (net.Listener, error) {
-	logger.Info("listening on port", zap.Int("port", config.Port))
-	return net.Listen("tcp", ":"+strconv.Itoa(config.Port))
+func Listener(config *config.Config, logger *zap.Logger) (net.Listener, error) {
+	logger.Info("listening on port", zap.Int("port", config.AgentServer.Port))
+	return net.Listen("tcp", ":"+strconv.Itoa(config.AgentServer.Port))
 }
 
 func New(

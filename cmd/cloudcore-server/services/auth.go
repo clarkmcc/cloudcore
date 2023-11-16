@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
-	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/clarkmcc/cloudcore/internal/token"
 	"google.golang.org/grpc/codes"
@@ -11,7 +11,7 @@ import (
 )
 
 type AuthService struct {
-	config *config.ServerConfig
+	config *config.Config
 	signer *token.Signer
 	db     database.Database
 
@@ -58,7 +58,7 @@ func (s *AuthService) Authenticate(ctx context.Context, req *rpc.AuthenticateReq
 	}
 }
 
-func NewAuthService(config *config.ServerConfig, signer *token.Signer, db database.Database) *AuthService {
+func NewAuthService(config *config.Config, signer *token.Signer, db database.Database) *AuthService {
 	return &AuthService{
 		signer: signer,
 		config: config,

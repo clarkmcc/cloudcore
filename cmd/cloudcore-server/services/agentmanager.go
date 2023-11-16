@@ -2,14 +2,14 @@ package services
 
 import (
 	"context"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
-	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"go.uber.org/zap"
 )
 
 type AgentManagerService struct {
-	config *config.ServerConfig
+	config *config.Config
 	logger *zap.Logger
 	db     database.Database
 
@@ -25,7 +25,7 @@ func (s *AgentManagerService) UploadMetadata(ctx context.Context, req *rpc.Uploa
 	return &rpc.UploadMetadataResponse{}, nil
 }
 
-func NewAgentManagerService(config *config.ServerConfig, logger *zap.Logger, db database.Database) *AgentManagerService {
+func NewAgentManagerService(config *config.Config, logger *zap.Logger, db database.Database) *AgentManagerService {
 	return &AgentManagerService{
 		logger: logger.Named("agent-manager"),
 		config: config,

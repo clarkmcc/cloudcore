@@ -3,8 +3,10 @@ package config
 import "github.com/spf13/viper"
 
 func init() {
-	viper.MustBindEnv("port", "PORT")
-	viper.SetDefault("port", 10000)
+	viper.MustBindEnv("agentServer.port", "AGENT_SERVER_PORT")
+	viper.MustBindEnv("appServer.port", "APP_SERVER_PORT")
+	viper.SetDefault("agentServer.port", 10000)
+	viper.SetDefault("appServer.port", 10001)
 	_ = viper.BindEnv("logging.level", "LOGGING_LEVEL")
 	_ = viper.BindEnv("logging.debug", "LOGGING_DEBUG")
 	viper.MustBindEnv("auth.signingSecret", "AUTH_TOKEN_SIGNING_SECRET")
@@ -14,10 +16,11 @@ func init() {
 }
 
 type Config struct {
-	Port     int
-	Logging  Logging        `json:"logging"`
-	Auth     serverAuth     `json:"auth"`
-	Database serverDatabase `json:"database"`
+	AgentServer AgentServer    `json:"agentServer"`
+	AppServer   AppServer      `json:"appServer"`
+	Logging     Logging        `json:"logging"`
+	Auth        serverAuth     `json:"auth"`
+	Database    serverDatabase `json:"database"`
 }
 
 type serverAuth struct {
@@ -40,6 +43,14 @@ type serverDatabase struct {
 type Logging struct {
 	Level string `json:"level"`
 	Debug bool   `json:"debug"`
+}
+
+type AgentServer struct {
+	Port int `json:"port"`
+}
+
+type AppServer struct {
+	Port int `json:"port"`
 }
 
 func New() (*Config, error) {
