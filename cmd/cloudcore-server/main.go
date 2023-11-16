@@ -1,6 +1,7 @@
 package main
 
 import (
+	appbackend "github.com/clarkmcc/cloudcore/app/backend"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/server"
@@ -21,14 +22,11 @@ func main() {
 		fx.Provide(services.NewAuthService),
 		fx.Provide(services.NewAgentManagerService),
 		fx.Provide(server.Listener),
-		// Extra the logging config from the Agent-specific config
-		fx.Provide(func(config *config.Config) *config.Logging {
-			return &config.Logging
-		}),
+		fx.Provide(appbackend.New),
+		fx.Provide(server.New),
 		fx.Provide(func(config *config.Config) *zap.Logger {
 			return logger.New(config.Logging.Level, config.Logging.Debug)
 		}),
-		fx.Provide(server.New),
 		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: logger}
 		}),
@@ -36,6 +34,7 @@ func main() {
 			return db.Migrate()
 		}),
 		fx.Invoke(func(_ *grpc.Server) {}),
+		fx.Invoke(func(_ *appbackend.Server) {}),
 	)
 	err := app.Err()
 	if err != nil {
