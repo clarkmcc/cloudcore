@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
 	"github.com/clarkmcc/cloudcore/internal/agentdb"
 	"github.com/clarkmcc/cloudcore/internal/client"
-	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/logger"
 	"github.com/clarkmcc/cloudcore/internal/tasks"
 	_ "github.com/clarkmcc/cloudcore/internal/tasks/registered"
@@ -23,9 +23,9 @@ var cmd = &cobra.Command{
 				ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 				return tomb.WithContext(ctx)
 			}),
-			fx.Provide(config.NewAgentConfig),
+			fx.Provide(config.New),
 			// Extra the logging config from the Agent-specific config
-			fx.Provide(func(config *config.AgentConfig) *config.Logging {
+			fx.Provide(func(config *config.Config) *config.Logging {
 				return &config.Logging
 			}),
 			fx.Provide(logger.New),

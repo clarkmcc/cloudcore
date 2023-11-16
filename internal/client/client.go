@@ -24,8 +24,8 @@ package client
 
 import (
 	"context"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
 	"github.com/clarkmcc/cloudcore/internal/agentdb"
-	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -119,7 +119,7 @@ func (c *Client) setupClientsLocked(ctx context.Context) (err error) {
 	return nil
 }
 
-func New(config *config.AgentConfig, db agentdb.AgentDB, logger *zap.Logger) *Client {
+func New(config *config.Config, db agentdb.AgentDB, logger *zap.Logger) *Client {
 	c := &Client{
 		dialer: func(ctx context.Context) (*grpc.ClientConn, error) {
 			return grpc.Dial(config.Server.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))

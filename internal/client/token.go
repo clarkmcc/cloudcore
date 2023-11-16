@@ -26,8 +26,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
 	"github.com/clarkmcc/cloudcore/internal/agentdb"
-	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/clarkmcc/cloudcore/internal/sysinfo"
 	"github.com/clarkmcc/cloudcore/internal/token"
@@ -41,7 +41,7 @@ import (
 // that are used to authenticate the agent with the server.
 type tokenManager struct {
 	logger *zap.Logger
-	config *config.AgentConfig
+	config *config.Config
 	db     agentdb.AgentDB
 
 	client *Client
@@ -126,7 +126,7 @@ func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *agentdb.Aut
 	}, nil
 }
 
-func newTokenManager(config *config.AgentConfig, db agentdb.AgentDB, logger *zap.Logger, client *Client) *tokenManager {
+func newTokenManager(config *config.Config, db agentdb.AgentDB, logger *zap.Logger, client *Client) *tokenManager {
 	return &tokenManager{
 		logger: logger.Named("token-manager"),
 		config: config,

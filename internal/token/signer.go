@@ -1,7 +1,7 @@
 package token
 
 import (
-	"github.com/clarkmcc/cloudcore/internal/config"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
 )
@@ -25,7 +25,7 @@ func (s *Signer) ValidateToken(token string) error {
 	return err
 }
 
-func NewSigner(config *config.ServerConfig) *Signer {
+func NewSigner(config *config.Config) *Signer {
 	return &Signer{
 		secret: []byte(config.Auth.TokenSigningSecret),
 	}

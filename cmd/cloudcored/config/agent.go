@@ -7,13 +7,20 @@ import (
 	"os"
 )
 
+func init() {
+	viper.SetDefault("server.endpoint", "127.0.0.1:10000")
+	viper.SetDefault("logging.level", "info")
+	viper.SetDefault("logging.debug", true)
+	viper.SetDefault("database.flavor", AgentDatabaseFlavorMemory)
+}
+
 type AgentDatabaseFlavor string
 
 const (
 	AgentDatabaseFlavorMemory AgentDatabaseFlavor = "memory"
 )
 
-type AgentConfig struct {
+type Config struct {
 	Server       server
 	Logging      Logging
 	Database     database
@@ -33,7 +40,7 @@ type Logging struct {
 	Debug bool   `json:"debug"`
 }
 
-func NewAgentConfig() (*AgentConfig, error) {
+func New() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	if cwd, err := os.Getwd(); err == nil {
@@ -44,7 +51,7 @@ func NewAgentConfig() (*AgentConfig, error) {
 		return nil, err
 	}
 
-	var cfg AgentConfig
+	var cfg Config
 	err = viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, err

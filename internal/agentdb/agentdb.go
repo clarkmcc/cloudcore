@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/clarkmcc/cloudcore/internal/config"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
 )
 
 var (
@@ -22,7 +22,7 @@ type AgentDB interface {
 	SaveAgentID(ctx context.Context, agentID string) error
 }
 
-func New(cfg *config.AgentConfig) (AgentDB, error) {
+func New(cfg *config.Config) (AgentDB, error) {
 	switch cfg.Database.Flavor {
 	case config.AgentDatabaseFlavorMemory:
 		return newMemoryDB()

@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/clarkmcc/cloudcore/internal/config"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"

@@ -13,7 +13,7 @@ func init() {
 	viper.MustBindEnv("database.connectionString", "DATABASE_CONNECTION_STRING")
 }
 
-type ServerConfig struct {
+type Config struct {
 	Port     int
 	Logging  Logging        `json:"logging"`
 	Auth     serverAuth     `json:"auth"`
@@ -37,12 +37,16 @@ type serverDatabase struct {
 	ConnectionString string       `json:"connectionString"`
 }
 
-func NewServerConfig() (*ServerConfig, error) {
-	var cfg ServerConfig
+type Logging struct {
+	Level string `json:"level"`
+	Debug bool   `json:"debug"`
+}
+
+func New() (*Config, error) {
+	var cfg Config
 	err := viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, err
 	}
-	printStructure(cfg)
 	return &cfg, nil
 }

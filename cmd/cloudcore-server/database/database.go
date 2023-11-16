@@ -3,8 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database/cockroachdb"
-	"github.com/clarkmcc/cloudcore/internal/config"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 )
 
@@ -20,7 +20,7 @@ type Database interface {
 	AuthenticateAgent(ctx context.Context, psk string, md *rpc.SystemMetadata) (string, error)
 }
 
-func New(cfg *config.ServerConfig) (Database, error) {
+func New(cfg *config.Config) (Database, error) {
 	switch cfg.Database.Type {
 	case config.DatabaseTypeCockroachDB:
 		return cockroachdb.New(cfg)
