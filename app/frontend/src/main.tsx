@@ -2,9 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import "@fontsource/inter";
+import { ThemeProvider } from "@/components/theme-provider.tsx";
 import { Auth0Provider } from "@auth0/auth0-react";
-import { CssBaseline, CssVarsProvider } from "@mui/joy";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -17,10 +16,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       useRefreshTokens={true}
       cacheLocation="localstorage"
     >
-      <CssVarsProvider>
-        <CssBaseline />
+      <ThemeProvider defaultTheme="dark" storageKey="theme">
         <App />
-      </CssVarsProvider>
+      </ThemeProvider>
     </Auth0Provider>
   </React.StrictMode>,
 );
