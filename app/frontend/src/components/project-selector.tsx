@@ -11,14 +11,13 @@ import { useState } from "react";
 import { ProjectCreateDialog } from "@/components/project-create-dialog.tsx";
 
 export function ProjectSelector() {
-  const { projects, activeProject, setActiveProject } = useProject();
+  const { projects, activeProjectId, setActiveProject } = useProject();
   const [open, setOpen] = useState(false);
 
   function handleCreateProject(value: string) {
     switch (value) {
       case "new":
         setOpen(true);
-        console.log("opening");
         break;
       default:
         // eslint-disable-next-line no-case-declarations
@@ -32,7 +31,7 @@ export function ProjectSelector() {
 
   return (
     <>
-      <Select value={activeProject?.id} onValueChange={handleCreateProject}>
+      <Select value={activeProjectId} onValueChange={handleCreateProject}>
         <SelectTrigger>
           <SelectValue placeholder="Project" />
         </SelectTrigger>
