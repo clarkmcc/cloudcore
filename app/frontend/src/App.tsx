@@ -41,7 +41,7 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<AuthenticatedContainer />}>
       <Route path="/projects/:projectId">
-        <Route element={<ProjectHome />} loader={loadProject} />
+        <Route index element={<ProjectHome />} loader={loadProject} />
         <Route path="/projects/:projectId/hosts" element={<p>hosts</p>} />
         <Route
           path="/projects/:projectId/hosts/groups"
