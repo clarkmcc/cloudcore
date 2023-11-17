@@ -17,7 +17,8 @@ var schemaConfig = graphql.SchemaConfig{
 	Mutation: graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"ensureUser": ensureUser,
+			"ensureUser":    ensureUser,
+			"projectCreate": projectCreate,
 		},
 	}),
 }

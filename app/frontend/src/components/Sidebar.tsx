@@ -9,8 +9,8 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar.tsx";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useProjectNavigate } from "@/hooks.ts";
 import { ProjectSelector } from "@/components/project-selector.tsx";
+import { useProjectNavigate } from "@/hooks/navigation.ts";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 

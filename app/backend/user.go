@@ -2,15 +2,14 @@ package appbackend
 
 import (
 	"github.com/clarkmcc/cloudcore/app/backend/middleware"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database/types"
 	"github.com/graphql-go/graphql"
 )
 
 var ensureUser = &graphql.Field{
 	Type: graphql.NewList(projectType),
 	Args: graphql.FieldConfigArgument{},
-	Resolve: func(p graphql.ResolveParams) (any, error) {
-		db := db(p.Context)
-		subject := middleware.SubjectFromContext(p.Context)
-		return db.UpsertUser(p.Context, subject)
-	},
+	Resolve: wrapper(func(rctx resolveContext) ([]types.Project, error) {
+		return rctx.db.UpsertUser(rctx, middleware.SubjectFromContext(rctx))
+	}),
 }

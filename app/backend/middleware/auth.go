@@ -25,21 +25,15 @@ func Authentication(config *config.Config, logger *zap.Logger) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		token, err := parseToken(c.Request)
-		if err != nil {
-			_ = c.AbortWithError(http.StatusUnauthorized, errors.New("invalid auth header"))
-			return
-		}
-		rawClaims, err := v.ValidateToken(c, token)
+		claims, err := getRawClaims(c, v, logger, c.Request)
 		if err != nil {
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
 
 		// Append the validated claims to the context if we have them
-		ctx := c.Request.Context()
-		if claims, ok := rawClaims.(*validator.ValidatedClaims); ok {
-			c.Request = c.Request.WithContext(withClaimsContext(ctx, claims))
+		if claims != nil {
+			c.Request = c.Request.WithContext(withClaimsContext(c.Request.Context(), claims))
 		}
 		c.Next()
 	}

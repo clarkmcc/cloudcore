@@ -6,7 +6,8 @@ schema {
 }
 
 type Mutation {
-    ensureUser: Project
+    ensureUser: [Project]
+    projectCreate(description: String, name: String!): ProjectCreate
 }
 
 type Project {
@@ -15,6 +16,11 @@ type Project {
     name: String
     status: Status
     updated_at: DateTime
+}
+
+type ProjectCreate {
+    allProjects: [Project]
+    project: Project
 }
 
 type Query {

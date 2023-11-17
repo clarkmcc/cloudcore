@@ -11,6 +11,7 @@ import { loadProject, ProjectHome } from "@/pages/project.tsx";
 import { withAuthenticationRequired } from "@auth0/auth0-react";
 import { useEnsureUser } from "@/hooks/user.ts";
 import { AuthenticatedApolloProvider } from "@/queries/client.tsx";
+import { ProjectProvider } from "@/context/project.tsx";
 
 function Container() {
   useEnsureUser();
@@ -29,7 +30,9 @@ function Container() {
 const AuthenticatedContainer = withAuthenticationRequired(() => {
   return (
     <AuthenticatedApolloProvider>
-      <Container />
+      <ProjectProvider>
+        <Container />
+      </ProjectProvider>
     </AuthenticatedApolloProvider>
   );
 });

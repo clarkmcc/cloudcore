@@ -27,6 +27,12 @@ type AppDatabase interface {
 	// UpsertUser takes an OIDC subject and upserts the user into the database
 	// and returns the users default project.
 	UpsertUser(ctx context.Context, subject string) ([]types.Project, error)
+
+	// CreateProject takes an OIDC subject and the project details and creates a new project.
+	CreateProject(ctx context.Context, subject, name, description string) (types.Project, error)
+
+	// GetUserProjects takes an OIDC subject returns all the projects the user is a member of.
+	GetUserProjects(ctx context.Context, subject string) ([]types.Project, error)
 }
 
 func New(cfg *config.Config) (Database, error) {
