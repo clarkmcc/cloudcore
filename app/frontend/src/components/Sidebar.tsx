@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { cn } from "@/lib/utils.ts";
 import { Button, ButtonProps } from "@/components/ui/button.tsx";
-import { Boxes, Cloud, Home, Laptop, LogOut, Settings } from "lucide-react";
+import { Cloud, Component, Home, Laptop, LogOut, Settings } from "lucide-react";
 import { ThemeModeToggle } from "@/components/theme-mode-toggle.tsx";
 import {
   Avatar,
@@ -21,7 +21,7 @@ export function Sidebar({ className }: SidebarProps) {
   const link = useCallback((page: string): Partial<ButtonProps> => {
     return {
       className: "w-full justify-start",
-      variant: window.location.pathname === page ? "secondary" : "ghost",
+      variant: window.location.pathname.endsWith(page) ? "secondary" : "ghost",
       onClick: () => navigate(page),
     };
   }, []);
@@ -60,7 +60,7 @@ export function Sidebar({ className }: SidebarProps) {
                 Hosts
               </Button>
               <Button {...link("/hosts/groups")}>
-                <Boxes className="mr-2 h-4 w-4" />
+                <Component className="mr-2 h-4 w-4" />
                 Groups
               </Button>
             </div>
@@ -78,23 +78,30 @@ export function Sidebar({ className }: SidebarProps) {
 
           {/* Profile */}
           <div className="border-t pt-4">
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
+              {" "}
+              {/* Flex container */}
               {/* Avatar and User Info */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 max-w-[calc(100%-3rem)]">
+                {" "}
+                {/* Adjust max-width as needed */}
                 <Avatar>
                   <AvatarImage src={user?.picture} />
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="text-sm font-medium leading-none">
+                <div className="overflow-hidden">
+                  <p className="text-sm font-medium leading-none truncate">
                     {user?.given_name} {user?.family_name}
                   </p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {user?.email}
+                  </p>
                 </div>
               </div>
-
               {/* Logout Button */}
-              <div>
+              <div className="flex-shrink-0">
+                {" "}
+                {/* Prevent button from shrinking */}
                 <Button variant="secondary" size="icon" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>
