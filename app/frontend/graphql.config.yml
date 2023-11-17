@@ -1,0 +1,7 @@
+schema: ./schema.graphql
+extensions:
+  endpoints:
+    url: http://localhost:10001/graphql
+    headers:
+      user-agent: JS GraphQL
+    introspect:

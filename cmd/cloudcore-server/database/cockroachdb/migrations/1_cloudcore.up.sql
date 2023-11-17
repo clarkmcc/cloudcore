@@ -1,5 +1,5 @@
 -- Status enum for soft deletes
-CREATE TYPE "status" AS ENUM ('active', 'deleted');
+CREATE TYPE IF NOT EXISTS "status" AS ENUM ('active', 'deleted');
 
 -- If cloud-hosted, a tenant represents a user and allows for better optimized
 -- or geo-located queries using data-domiciling techniques.
@@ -9,9 +9,22 @@ CREATE TABLE IF NOT EXISTS "tenant" (
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "name" STRING NOT NULL,
-    "description" STRING NOT NULL,
+    "description" STRING,
 
     PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "user" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "status" STATUS NOT NULL DEFAULT 'active',
+    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "tenant_id" UUID NOT NULL,
+    "subject" STRING NOT NULL,
+
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("tenant_id") REFERENCES "tenant" ("id") ON DELETE CASCADE,
+    UNIQUE ("subject") WHERE "status" = 'active'
 );
 
 CREATE TABLE IF NOT EXISTS "project" (
@@ -21,10 +34,24 @@ CREATE TABLE IF NOT EXISTS "project" (
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "tenant_id" UUID NOT NULL,
     "name" STRING NOT NULL,
-    "description" STRING NOT NULL,
+    "description" STRING,
 
     PRIMARY KEY ("id"),
     FOREIGN KEY ("tenant_id") REFERENCES "tenant" ("id") ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "user_project" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "status" STATUS NOT NULL DEFAULT 'active',
+    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "project_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
+    FOREIGN KEY ("user_id") REFERENCES "user" ("id") ON DELETE CASCADE,
+    UNIQUE ("project_id", "user_id")
 );
 
 -- Host represents a host machine that is running a cloudcore agent

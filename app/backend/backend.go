@@ -3,7 +3,10 @@ package appbackend
 import (
 	"context"
 	"encoding/json"
+	"github.com/clarkmcc/cloudcore/app/backend/middleware"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
+	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/graphql"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -12,65 +15,44 @@ import (
 	"strconv"
 )
 
-var _ http.Handler = &Server{}
-
 type Server struct {
-	schema graphql.Schema
-	logger *zap.Logger
+	schema   graphql.Schema
+	logger   *zap.Logger
+	database database.Database
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var req request
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		s.logger.Warn("failed to decode request", zap.Error(err))
-		_, _ = w.Write([]byte(err.Error()))
-		return
-	}
-	res := graphql.Do(graphql.Params{
-		Schema:         s.schema,
-		RequestString:  req.Query,
-		VariableValues: req.Variables,
-		OperationName:  req.Operation,
-		Context:        r.Context(),
-	})
-	err = json.NewEncoder(w).Encode(res)
-	if err != nil {
-		s.logger.Warn("failed to encode response", zap.Error(err))
-		_, _ = w.Write([]byte(err.Error()))
-		return
-	}
-}
-
-func New(lc fx.Lifecycle, config *config.Config, logger *zap.Logger) (*Server, error) {
-	s, err := graphql.NewSchema(graphql.SchemaConfig{
-		Query: graphql.NewObject(graphql.ObjectConfig{
-			Name: "RootQuery",
-			Fields: graphql.Fields{
-				"ping": &graphql.Field{
-					Type: graphql.String,
-					Resolve: func(p graphql.ResolveParams) (any, error) {
-						return "pong", nil
-					},
-				},
-			},
-		}),
-		//Mutation: graphql.NewObject(graphql.ObjectConfig{
-		//	Name:   "RootMutation",
-		//	Fields: graphql.Fields{},
-		//}),
-		//Subscription: graphql.NewObject(graphql.ObjectConfig{
-		//	Name:   "RootSubscription",
-		//	Fields: graphql.Fields{},
-		//}),
-	})
+func New(lc fx.Lifecycle, config *config.Config, database database.Database, logger *zap.Logger) (*Server, error) {
+	logger = logger.Named("app-backend")
+	s, err := graphql.NewSchema(schemaConfig)
 	if err != nil {
 		return nil, err
 	}
 	srv := Server{
-		schema: s,
-		logger: logger.Named("app-backend"),
+		schema:   s,
+		logger:   logger,
+		database: database,
 	}
+
+	r := gin.Default()
+	r.Use(middleware.CORS(), middleware.Authentication(config, logger.Named("auth")))
+	r.POST("/graphql", func(c *gin.Context) {
+		var req request
+		err := json.NewDecoder(c.Request.Body).Decode(&req)
+		if err != nil {
+			logger.Warn("failed to decode request", zap.Error(err))
+			_ = c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		res := graphql.Do(graphql.Params{
+			Schema:         s,
+			RequestString:  req.Query,
+			VariableValues: req.Variables,
+			OperationName:  req.Operation,
+			Context:        srv.graphqlContext(c.Request.Context()),
+		})
+		c.JSON(http.StatusOK, res)
+	})
+
 	var listener net.Listener
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -78,8 +60,9 @@ func New(lc fx.Lifecycle, config *config.Config, logger *zap.Logger) (*Server, e
 			if err != nil {
 				return err
 			}
-			srv.logger.Info("listening on port", zap.Int("port", config.AppServer.Port))
-			go http.Serve(listener, &srv)
+			logger.Info("listening on port", zap.Int("port", config.AppServer.Port))
+
+			go http.Serve(listener, r.Handler())
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
