@@ -11,6 +11,7 @@ import {
 import { useAuth0 } from "@auth0/auth0-react";
 import { ProjectSelector } from "@/components/project-selector.tsx";
 import { useProjectNavigate } from "@/hooks/navigation.ts";
+import { matchPath } from "react-router-dom";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -19,9 +20,16 @@ export function Sidebar({ className }: SidebarProps) {
   const navigate = useProjectNavigate();
 
   const link = useCallback((page: string): Partial<ButtonProps> => {
+    // Returns true if the sidebar link is selected. Has a special case for
+    // the home page, which is selected if the current path is just the root
+    // of a selected project.
+    const isSelected =
+      page !== "/"
+        ? window.location.pathname.endsWith(page)
+        : matchPath("/projects/:projectId", window.location.pathname);
     return {
       className: "w-full justify-start",
-      variant: window.location.pathname.endsWith(page) ? "secondary" : "ghost",
+      variant: isSelected ? "secondary" : "ghost",
       onClick: () => navigate(page),
     };
   }, []);

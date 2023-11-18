@@ -30,7 +30,7 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 		WHERE key = $1
 		  	AND status = 'active'
 			AND uses_remaining > 0
-			AND expiration > NOW()
+			AND (expiration IS NULL OR expiration > NOW())
 		LIMIT 1
 	`, key)
 	if err != nil {
