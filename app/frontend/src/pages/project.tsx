@@ -3,6 +3,7 @@ import { useEffect } from "react";
 
 export const loadProject: LoaderFunction = async ({ params }) => {
   // todo: get project from api
+  console.log("loading project", params.projectId);
   return { projectId: params.projectId };
 };
 

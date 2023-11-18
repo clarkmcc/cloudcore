@@ -23,7 +23,6 @@ type Props = {
 
 export function ProjectProvider({ children }: Props) {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | undefined>();
   const [projectId, setProjectId] = useProjectId();
 
   function getFromLocalStorage(): Project[] {
@@ -32,9 +31,9 @@ export function ProjectProvider({ children }: Props) {
     return [];
   }
 
-  function saveToLocalStorage(projects: Project[]) {
+  const saveToLocalStorage = useCallback((projects: Project[]) => {
     localStorage.setItem("projects", JSON.stringify(projects));
-  }
+  }, []);
 
   // On startup, load projects from local storage
   useEffect(() => {
@@ -44,50 +43,33 @@ export function ProjectProvider({ children }: Props) {
     }
   }, []);
 
-  useEffect(() => {
-    if (activeProjectId == null && projects.length > 0 && projectId != null) {
-      console.log("active project is null");
-      const project = projects.find((project) => project.id === projectId);
-      if (project) {
-        console.log("setting active project", project.id);
-        setActiveProjectId(project.id);
-      }
-    }
-  }, [activeProjectId, projectId, projects]);
-
-  // // If we have projects, but no active project, select one.
-  // useEffect(() => {
-  //   if (projects.length > 0 && activeProject == null) {
-  //     setActiveProject(projects[0]);
-  //   }
-  // }, [activeProject, projects]);
-
   const handleSetProjects = useCallback(
     (projects: Project[]) => {
-      console.log("setting projects", projects);
       setProjects(projects);
       saveToLocalStorage(projects);
-      // if (activeProjectId == null && projects.length > 0) {
-      //   setActiveProjectId(projects[0].id);
-      // }
+
+      // On first login, we'll load the list of projects but there won't be
+      // any active project, so we'll set the first project as active.
+      if (projectId == null && projects.length > 0) {
+        setProjectId(projects[0].id);
+      }
     },
-    [setProjects, saveToLocalStorage],
+    [projectId, setProjects, projects, saveToLocalStorage],
   );
 
   const handleSetActiveProject = useCallback(
     (project: Project) => {
       console.log("setting active project");
-      setActiveProjectId(project.id);
       setProjectId(project.id);
     },
-    [setActiveProjectId, setProjectId],
+    [setProjectId],
   );
 
   return (
     <ProjectContext.Provider
       value={{
         projects,
-        activeProjectId,
+        activeProjectId: projectId,
         setActiveProject: handleSetActiveProject,
         setProjects: handleSetProjects,
       }}

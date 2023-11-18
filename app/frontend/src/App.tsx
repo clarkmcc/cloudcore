@@ -12,6 +12,9 @@ import { withAuthenticationRequired } from "@auth0/auth0-react";
 import { useEnsureUser } from "@/hooks/user.ts";
 import { AuthenticatedApolloProvider } from "@/queries/client.tsx";
 import { ProjectProvider } from "@/context/project.tsx";
+import { SettingsPage } from "@/pages/settings.tsx";
+import { HostsPage } from "@/pages/hosts.tsx";
+import { HostGroupsPage } from "@/pages/host-groups.tsx";
 
 function Container() {
   useEnsureUser();
@@ -42,12 +45,20 @@ const router = createBrowserRouter(
     <Route path="/" element={<AuthenticatedContainer />}>
       <Route path="/projects/:projectId">
         <Route index element={<ProjectHome />} loader={loadProject} />
-        <Route path="/projects/:projectId/hosts" element={<p>hosts</p>} />
+        <Route
+          path="/projects/:projectId/hosts"
+          element={<HostsPage />}
+          loader={loadProject}
+        />
         <Route
           path="/projects/:projectId/hosts/groups"
-          element={<p>host groups</p>}
+          element={<HostGroupsPage />}
+          loader={loadProject}
         />
-        <Route path="/projects/:projectId/settings" element={<p>settings</p>} />
+        <Route
+          path="/projects/:projectId/settings"
+          element={<SettingsPage />}
+        />
       </Route>
     </Route>,
   ),
