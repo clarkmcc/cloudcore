@@ -53,3 +53,19 @@ func (d *Database) UpsertUser(ctx context.Context, subject string) ([]types.Proj
 
 	return []types.Project{project}, tx.Commit()
 }
+
+// CanAccessProject returns true if a user can access a given project ID.
+func (d *Database) CanAccessProject(ctx context.Context, subject, projectId string) (bool, error) {
+	err := d.db.QueryRowxContext(ctx, `
+		SELECT * FROM "user" u 
+		    INNER JOIN user_project p ON p.user_id = u.id 
+		WHERE u.subject = $1 AND p.project_id = $2;`,
+		subject, projectId).Err()
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	return false, err
+}

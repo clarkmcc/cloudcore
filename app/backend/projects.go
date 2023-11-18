@@ -50,8 +50,8 @@ var projectCreate = &graphql.Field{
 	Resolve: wrapper(func(rctx resolveContext) (map[string]any, error) {
 		sub := middleware.SubjectFromContext(rctx)
 		project, err := rctx.db.CreateProject(rctx, sub,
-			rctx.GetStringArg("name"),
-			rctx.GetStringArg("description"))
+			rctx.getStringArg("name"),
+			rctx.getStringArg("description"))
 		if err != nil {
 			return nil, fmt.Errorf("creating new project: %w", err)
 		}

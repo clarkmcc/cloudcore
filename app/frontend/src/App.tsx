@@ -15,6 +15,7 @@ import { ProjectProvider } from "@/context/project.tsx";
 import { SettingsPage } from "@/pages/settings.tsx";
 import { HostsPage } from "@/pages/hosts.tsx";
 import { HostGroupsPage } from "@/pages/host-groups.tsx";
+import { HostDetails } from "@/pages/host-details.tsx";
 
 function Container() {
   useEnsureUser();
@@ -45,10 +46,10 @@ const router = createBrowserRouter(
     <Route path="/" element={<AuthenticatedContainer />}>
       <Route path="/projects/:projectId">
         <Route index element={<ProjectHome />} loader={loadProject} />
+        <Route path="/projects/:projectId/hosts" element={<HostsPage />} />
         <Route
-          path="/projects/:projectId/hosts"
-          element={<HostsPage />}
-          loader={loadProject}
+          path="/projects/:projectId/hosts/:hostId"
+          element={<HostDetails />}
         />
         <Route
           path="/projects/:projectId/hosts/groups"

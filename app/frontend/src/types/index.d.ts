@@ -8,6 +8,7 @@ export type Host = {
   createdAt: string;
   updatedAt: string;
   identifier: string;
+  online: boolean;
   hostname?: string;
   publicIpAddress?: string;
   privateIpAddress?: string;

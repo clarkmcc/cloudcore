@@ -1,6 +1,10 @@
 package appbackend
 
-import "github.com/graphql-go/graphql"
+import (
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database/types"
+	"github.com/graphql-go/graphql"
+	"time"
+)
 
 var hostType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Host",
@@ -8,64 +12,82 @@ var hostType = graphql.NewObject(graphql.ObjectConfig{
 		"id": &graphql.Field{
 			Type: graphql.NewNonNull(graphql.String),
 		},
-		"created_at": &graphql.Field{
+		"createdAt": &graphql.Field{
 			Type: graphql.NewNonNull(graphql.DateTime),
 		},
-		"updated_at": &graphql.Field{
+		"updatedAt": &graphql.Field{
 			Type: graphql.NewNonNull(graphql.DateTime),
 		},
-		"status": &graphql.Field{
-			Type: graphql.NewNonNull(statusType),
+		"online": &graphql.Field{
+			Type: graphql.NewNonNull(graphql.Boolean),
+			Resolve: func(p graphql.ResolveParams) (any, error) {
+				h := p.Source.(types.Host)
+				if h.LastHeartbeatTimestamp.After(time.Now().Add(-time.Hour)) && h.Online {
+					return true, nil
+				}
+				return false, nil
+			},
 		},
 		"identifier": &graphql.Field{
 			Type:        graphql.NewNonNull(graphql.String),
 			Description: "An identifier for the host as determined by the agent. This is usually extracted from the host somehow (i.e. a Host ID).",
 		},
 		"hostname": &graphql.Field{
-			Type:        graphql.String,
+			Type:        nullStringType,
 			Description: "The hostname of the host.",
 		},
-		"public_ip_address": &graphql.Field{
-			Type:        graphql.String,
+		"publicIpAddress": &graphql.Field{
+			Type:        nullStringType,
 			Description: "The public IP address of the host.",
 		},
-		"private_ip_address": &graphql.Field{
-			Type:        graphql.String,
+		"privateIpAddress": &graphql.Field{
+			Type:        nullStringType,
 			Description: "The private IP address of the host.",
 		},
-		"os_name": &graphql.Field{
-			Type:        graphql.String,
+		"osName": &graphql.Field{
+			Type:        nullStringType,
 			Description: "The name of the operating system (i.e. darwin).",
 		},
-		"os_family": &graphql.Field{
-			Type:        graphql.String,
+		"osFamily": &graphql.Field{
+			Type:        nullStringType,
 			Description: "The family of the operating system (i.e. Standalone Workstation).",
 		},
-		"os_version": &graphql.Field{
-			Type:        graphql.String,
+		"osVersion": &graphql.Field{
+			Type:        nullStringType,
 			Description: "The version of the operating system (i.e. 14.0).",
 		},
-		"kernel_architecture": &graphql.Field{
-			Type:        graphql.String,
+		"kernelArchitecture": &graphql.Field{
+			Type:        nullStringType,
 			Description: "The architecture of the kernel (i.e. arm64).",
 		},
-		"kernel_version": &graphql.Field{
-			Type:        graphql.String,
+		"kernelVersion": &graphql.Field{
+			Type:        nullStringType,
 			Description: "The version of the kernel (i.e. 23.0.0).",
 		},
-		"cpu_model": &graphql.Field{
-			Type:        graphql.String,
+		"cpuModel": &graphql.Field{
+			Type:        nullStringType,
 			Description: "The model of the CPU (i.e. Apple M1 Max).",
 		},
-		"cpu_cores": &graphql.Field{
-			Type:        graphql.Int,
+		"cpuCores": &graphql.Field{
+			Type:        nullInt64Type,
 			Description: "The number of CPU cores (i.e. 10).",
 		},
 	},
 })
 
 var hostList = &graphql.Field{
-	Type:    graphql.NewList(hostType),
-	Args:    graphql.FieldConfigArgument{},
-	Resolve: nil,
+	Type: graphql.NewList(hostType),
+	Args: graphql.FieldConfigArgument{
+		"projectId": &graphql.ArgumentConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+	},
+	Resolve: wrapper(func(rctx resolveContext) ([]types.Host, error) {
+		projectID := rctx.getStringArg("projectId")
+		err := rctx.canAccessProject(projectID)
+		if err != nil {
+			return nil, err
+		}
+		return rctx.db.ListProjectHosts(rctx, projectID)
+	}),
 }

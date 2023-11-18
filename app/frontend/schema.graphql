@@ -5,6 +5,35 @@ schema {
     mutation: Mutation
 }
 
+type Host {
+    "The number of CPU cores (i.e. 10)."
+    cpuCores: Int
+    "The model of the CPU (i.e. Apple M1 Max)."
+    cpuModel: String
+    createdAt: DateTime!
+    "The hostname of the host."
+    hostname: String
+    id: String!
+    "An identifier for the host as determined by the agent. This is usually extracted from the host somehow (i.e. a Host ID)."
+    identifier: String!
+    "The architecture of the kernel (i.e. arm64)."
+    kernelArchitecture: String
+    "The version of the kernel (i.e. 23.0.0)."
+    kernelVersion: String
+    "The family of the operating system (i.e. Standalone Workstation)."
+    osFamily: String
+    "The name of the operating system (i.e. darwin)."
+    osName: String
+    "The version of the operating system (i.e. 14.0)."
+    osVersion: String
+    "The private IP address of the host."
+    privateIpAddress: String
+    "The public IP address of the host."
+    publicIpAddress: String
+    status: Status!
+    updatedAt: DateTime!
+}
+
 type Mutation {
     ensureUser: [Project]
     projectCreate(description: String, name: String!): ProjectCreate
@@ -24,7 +53,7 @@ type ProjectCreate {
 }
 
 type Query {
-    ping: String
+    hosts(projectId: String!): [Host]
 }
 
 enum Status {

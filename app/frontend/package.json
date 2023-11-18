@@ -12,6 +12,9 @@
   "dependencies": {
     "@apollo/client": "^3.8.7",
     "@auth0/auth0-react": "^2.2.3",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.14.18",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-dropdown-menu": "^2.0.6",

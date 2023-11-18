@@ -33,6 +33,13 @@ type AppDatabase interface {
 
 	// GetUserProjects takes an OIDC subject returns all the projects the user is a member of.
 	GetUserProjects(ctx context.Context, subject string) ([]types.Project, error)
+
+	// CanAccessProject returns true if an OIDC subject and access a specific project ID. This
+	// is helpful for determining if a user has the authorization to access a project.
+	CanAccessProject(ctx context.Context, subject, projectId string) (bool, error)
+
+	// ListProjectHosts returns all the hosts in a project with the given project ID.
+	ListProjectHosts(ctx context.Context, projectId string) ([]types.Host, error)
 }
 
 func New(cfg *config.Config) (Database, error) {

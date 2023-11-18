@@ -2,8 +2,19 @@ import { PageHeader } from "@/components/page-header.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Plus } from "lucide-react";
 import { HostsTable } from "@/components/hosts-table.tsx";
+import { useQuery } from "@apollo/client";
+import { QUERY_HOSTS_LIST } from "@/queries/hosts.ts";
+import { useEffect } from "react";
+import { useProjectId } from "@/hooks/navigation.ts";
+import { ErrorBanner } from "@/components/error-banner.tsx";
+import CircularProgress from "@mui/material/CircularProgress";
 
 export function HostsPage() {
+  const [projectId] = useProjectId();
+  const { data, loading, error } = useQuery(QUERY_HOSTS_LIST, {
+    variables: { projectId },
+  });
+
   return (
     <>
       <PageHeader
@@ -17,7 +28,9 @@ export function HostsPage() {
         </Button>
       </div>
       <div className="px-7 pt-7">
-        <HostsTable hosts={[]} />
+        {error && <ErrorBanner error={error} />}
+        {loading && <CircularProgress color="primary" />}
+        {!error && !loading && <HostsTable hosts={data?.hosts ?? []} />}
       </div>
     </>
   );

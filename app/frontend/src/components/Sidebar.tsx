@@ -50,7 +50,7 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="px-3 py-2 space-y-3">
             <div className="flex space-x-2">
               <Cloud className="w-8 h-8" />
-              <h1 className="text-2xl font-medium">cloudcore</h1>
+              <h1 className="text-xl font-bold">cloudcore</h1>
             </div>
             <div className="flex space-x-3">
               <ProjectSelector />

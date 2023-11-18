@@ -2,6 +2,8 @@ package appbackend
 
 import (
 	"context"
+	"fmt"
+	"github.com/clarkmcc/cloudcore/app/backend/middleware"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
 	"github.com/graphql-go/graphql"
 	"github.com/spf13/cast"
@@ -32,8 +34,23 @@ type resolveContext struct {
 	logger *zap.Logger
 }
 
-func (r *resolveContext) GetStringArg(name string) string {
+func (r *resolveContext) getStringArg(name string) string {
 	return cast.ToString(r.params.Args[name])
+}
+
+func (r *resolveContext) canAccessProject(projectId string) error {
+	sub := middleware.SubjectFromContext(r)
+	if sub == "" {
+		return fmt.Errorf("no subject in context")
+	}
+	ok, err := r.db.CanAccessProject(r, sub, projectId)
+	if err != nil {
+		return fmt.Errorf("checking if user can access project: %w", err)
+	}
+	if !ok {
+		return fmt.Errorf("Not authorized to access project")
+	}
+	return nil
 }
 
 type resolverFunc[T any] func(rctx resolveContext) (T, error)
