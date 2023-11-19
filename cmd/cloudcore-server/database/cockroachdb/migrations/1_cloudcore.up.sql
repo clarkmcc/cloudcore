@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS "global_state" (
 CREATE TABLE IF NOT EXISTS "tenant" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "name" STRING NOT NULL,
     "description" STRING,
 
@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS "tenant" (
 CREATE TABLE IF NOT EXISTS "user" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "tenant_id" UUID NOT NULL,
     "subject" STRING NOT NULL,
 
@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS "user" (
 CREATE TABLE IF NOT EXISTS "project" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "tenant_id" UUID NOT NULL,
     "name" STRING NOT NULL,
     "description" STRING,
@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS "project" (
 CREATE TABLE IF NOT EXISTS "user_project" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "project_id" UUID NOT NULL,
     "user_id" UUID NOT NULL,
 
@@ -64,8 +64,8 @@ CREATE TABLE IF NOT EXISTS "user_project" (
 CREATE TABLE IF NOT EXISTS "host" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "project_id" UUID NOT NULL,
 
     -- "identifier" is the unique identifier for the host and could be anything
@@ -97,13 +97,13 @@ CREATE TABLE IF NOT EXISTS "host" (
 CREATE TABLE IF NOT EXISTS "agent" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "project_id" UUID NOT NULL,
 
     "host_id" UUID NOT NULL,
     "online" BOOL NOT NULL,
-    "last_heartbeat_timestamp" TIMESTAMP NOT NULL,
+    "last_heartbeat_timestamp" TIMESTAMPTZ NOT NULL,
 
     PRIMARY KEY ("id"),
     FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
@@ -114,16 +114,16 @@ CREATE TABLE IF NOT EXISTS "agent" (
 CREATE TABLE IF NOT EXISTS "agent_psk" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "project_id" UUID NOT NULL,
 
     "name" STRING NOT NULL,
     "description" STRING,
     "key" STRING NOT NULL DEFAULT gen_random_uuid(),
     -- The number of times this PSK can be used before it cannot be used again
-    "uses_remaining" INTEGER NOT NULL DEFAULT 1,
-    -- The timestamp when this PSK expires and can no longer be used
+    "uses_remaining" INTEGER DEFAULT 1,
+    -- The TIMESTAMPTZ when this PSK expires and can no longer be used
     "expiration" TIMESTAMP,
 
     PRIMARY KEY ("id"),
@@ -134,8 +134,8 @@ CREATE TABLE IF NOT EXISTS "agent_psk" (
 CREATE TABLE IF NOT EXISTS "agent_group" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "project_id" UUID NOT NULL,
 
     "name" STRING NOT NULL,
@@ -149,8 +149,8 @@ CREATE TABLE IF NOT EXISTS "agent_group" (
 CREATE TABLE IF NOT EXISTS "agent_group_member" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "project_id" UUID NOT NULL,
 
     "agent_id" UUID NOT NULL,
@@ -168,8 +168,8 @@ CREATE TABLE IF NOT EXISTS "agent_group_member" (
 CREATE TABLE IF NOT EXISTS "agent_group_psk" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "project_id" UUID NOT NULL,
 
     "agent_group_id" UUID NOT NULL,
