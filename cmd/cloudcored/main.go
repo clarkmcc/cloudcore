@@ -62,6 +62,10 @@ var cmd = &cobra.Command{
 	},
 }
 
+func init() {
+	cmd.PersistentFlags().String("psk", "", "Pre-shared key for authenticating with the server")
+}
+
 func main() {
 	if err := cmd.Execute(); err != nil {
 		panic(err)
