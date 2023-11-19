@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	appbackend "github.com/clarkmcc/cloudcore/app/backend"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
@@ -12,10 +13,15 @@ import (
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"os"
+	"os/signal"
 )
 
 func main() {
 	app := fx.New(
+		fx.Provide(func() (context.Context, context.CancelFunc) {
+			return signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+		}),
 		fx.Provide(config.New),
 		fx.Provide(token.NewSigner),
 		fx.Provide(database.New),
@@ -30,8 +36,8 @@ func main() {
 		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: logger}
 		}),
-		fx.Invoke(func(db database.Database) error {
-			return db.Migrate()
+		fx.Invoke(func(ctx context.Context, db database.Database) error {
+			return db.Migrate(ctx)
 		}),
 		fx.Invoke(func(_ *grpc.Server) {}),
 		fx.Invoke(func(_ *appbackend.Server) {}),

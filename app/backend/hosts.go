@@ -18,6 +18,9 @@ var hostType = graphql.NewObject(graphql.ObjectConfig{
 		"updatedAt": &graphql.Field{
 			Type: graphql.NewNonNull(graphql.DateTime),
 		},
+		"lastHeartbeatTimestamp": &graphql.Field{
+			Type: graphql.NewNonNull(graphql.DateTime),
+		},
 		"online": &graphql.Field{
 			Type: graphql.NewNonNull(graphql.Boolean),
 			Resolve: func(p graphql.ResolveParams) (any, error) {

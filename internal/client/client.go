@@ -24,14 +24,17 @@ package client
 
 import (
 	"context"
+	"errors"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
 	"github.com/clarkmcc/cloudcore/internal/agentdb"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"io"
 	"sync"
 )
 
@@ -40,14 +43,18 @@ type Client struct {
 
 	tokenManager *tokenManager
 
-	lock  sync.Mutex
-	conn  *grpc.ClientConn
-	auth  rpc.AuthenticationClient
-	agent rpc.AgentManagerClient
+	lock   sync.Mutex
+	conn   *grpc.ClientConn
+	auth   rpc.AuthenticationClient
+	agent  rpc.AgentManagerClient
+	notify rpc.AgentManager_NotificationsClient
 }
 
 func (c *Client) Ping(ctx context.Context) error {
-	client, err := c.getAuthClient(ctx)
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	client, err := c.getAuthClientLocked(ctx)
 	if err != nil {
 		return err
 	}
@@ -56,11 +63,14 @@ func (c *Client) Ping(ctx context.Context) error {
 }
 
 func (c *Client) UploadMetadata(ctx context.Context, metadata *rpc.SystemMetadata) (*rpc.UploadMetadataResponse, error) {
-	ctx, err := c.getAuthContext(ctx)
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	ctx, err := c.getAuthContextLocked(ctx)
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.getAgentClient(ctx)
+	client, err := c.getAgentClientLocked(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -69,35 +79,70 @@ func (c *Client) UploadMetadata(ctx context.Context, metadata *rpc.SystemMetadat
 	})
 }
 
-func (c *Client) getAuthClient(ctx context.Context) (rpc.AuthenticationClient, error) {
-	err := c.connect(ctx)
+func (c *Client) Notify(ctx context.Context, notification *rpc.ClientNotification) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	ctx, err := c.getAuthContextLocked(ctx)
+	if err != nil {
+		return err
+	}
+	stream, err := c.getNotificationsStreamLocked(ctx)
+	if err != nil {
+		return err
+	}
+	err = stream.Send(notification)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			c.notify = nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (c *Client) getNotificationsStreamLocked(ctx context.Context) (rpc.AgentManager_NotificationsClient, error) {
+	err := c.connectStreamsLocked(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return c.auth, nil
+	return c.notify, nil
 }
 
-func (c *Client) getAgentClient(ctx context.Context) (rpc.AgentManagerClient, error) {
-	err := c.connect(ctx)
+func (c *Client) getAgentClientLocked(ctx context.Context) (rpc.AgentManagerClient, error) {
+	err := c.connectLocked(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return c.agent, nil
 }
 
-func (c *Client) getAuthContext(ctx context.Context) (context.Context, error) {
-	tk, err := c.tokenManager.getAuthToken(ctx)
+func (c *Client) getAuthContextLocked(ctx context.Context) (context.Context, error) {
+	tk, err := c.tokenManager.getAuthTokenLocked(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return metadata.NewOutgoingContext(ctx, metadata.Pairs("token", tk)), nil
 }
 
-// connect connects to the server if not already connected. If the client is shutdown,
+// getAuthClientLocked returns a connected authentication client. This function should only be
+// called from the token manager, or from the Ping method above. It should only be called
+// in contexts where the client is already locked.
+//
+// Specifically, when this function is called from the token manager, the token manager should
+// already be locked because the token manager's getAuthTokenLocked method is only ever called from
+// one of the client's public RPC methods which actually acquire the lock.
+func (c *Client) getAuthClientLocked(ctx context.Context) (rpc.AuthenticationClient, error) {
+	err := c.connectLocked(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return c.auth, nil
+}
+
+// connectLocked connects to the server if not already connected. If the client is shutdown,
 // then this function will attempt a reconnect.
-func (c *Client) connect(ctx context.Context) error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+func (c *Client) connectLocked(ctx context.Context) error {
 	if c.conn != nil {
 		switch c.conn.GetState() {
 		case connectivity.Shutdown:
@@ -109,6 +154,25 @@ func (c *Client) connect(ctx context.Context) error {
 	return c.setupClientsLocked(ctx)
 }
 
+func (c *Client) connectStreamsLocked(ctx context.Context) (err error) {
+	ctx, err = c.getAuthContextLocked(ctx)
+	if err != nil {
+		return err
+	}
+
+	if c.notify != nil {
+		err := c.notify.Context().Err()
+		if err == nil {
+			return nil
+		}
+	}
+	c.notify, err = c.agent.Notifications(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *Client) setupClientsLocked(ctx context.Context) (err error) {
 	c.conn, err = c.dialer(ctx)
 	if err != nil {
@@ -116,6 +180,12 @@ func (c *Client) setupClientsLocked(ctx context.Context) (err error) {
 	}
 	c.auth = rpc.NewAuthenticationClient(c.conn)
 	c.agent = rpc.NewAgentManagerClient(c.conn)
+
+	// Reset the streams if we're reconnecting.
+	if c.notify != nil {
+		multierr.AppendFunc(&err, c.notify.CloseSend)
+	}
+	c.notify = nil
 	return nil
 }
 

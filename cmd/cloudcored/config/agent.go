@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
 )
@@ -40,7 +41,7 @@ type Logging struct {
 	Debug bool   `json:"debug"`
 }
 
-func New() (*Config, error) {
+func New(cmd *cobra.Command) (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	if cwd, err := os.Getwd(); err == nil {
@@ -49,6 +50,11 @@ func New() (*Config, error) {
 	err := viper.ReadInConfig()
 	if err != nil {
 		return nil, err
+	}
+
+	psk := cmd.Flag("psk").Value.String()
+	if len(psk) > 0 {
+		viper.Set("preSharedKey", psk)
 	}
 
 	var cfg Config

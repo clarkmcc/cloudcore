@@ -7,6 +7,7 @@ export type Host = {
   id: string;
   createdAt: string;
   updatedAt: string;
+  lastHeartbeatTimestamp: string;
   identifier: string;
   online: boolean;
   hostname?: string;

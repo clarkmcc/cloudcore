@@ -87,7 +87,9 @@ message ClientNotification {
     UNKNOWN = 0;
     AGENT_STARTUP = 1;
     AGENT_SHUTDOWN = 2;
+    HEARTBEAT = 3;
   }
+  Type type = 1;
 }
 
 message ServerNotification {

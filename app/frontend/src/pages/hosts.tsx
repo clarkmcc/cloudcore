@@ -4,7 +4,6 @@ import { Plus } from "lucide-react";
 import { HostsTable } from "@/components/hosts-table.tsx";
 import { useQuery } from "@apollo/client";
 import { QUERY_HOSTS_LIST } from "@/queries/hosts.ts";
-import { useEffect } from "react";
 import { useProjectId } from "@/hooks/navigation.ts";
 import { ErrorBanner } from "@/components/error-banner.tsx";
 import CircularProgress from "@mui/material/CircularProgress";

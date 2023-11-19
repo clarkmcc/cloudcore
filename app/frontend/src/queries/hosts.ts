@@ -5,6 +5,7 @@ export const QUERY_HOSTS_LIST = gql`
     hosts(projectId: $projectId) {
       id
       identifier
+      lastHeartbeatTimestamp
       hostname
       online
       createdAt

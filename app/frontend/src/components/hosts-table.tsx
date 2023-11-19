@@ -27,6 +27,7 @@ import { Link } from "react-router-dom";
 import { useProjectId } from "@/hooks/navigation.ts";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge.tsx";
+import moment from "moment";
 
 type HostWithGroups = Host & {
   groups: string[];
@@ -97,11 +98,18 @@ export function HostsTable({ hosts }: HostsTableProps) {
             case false:
               return (
                 <Badge className="text-xs" variant="ghost">
-                  <div className="rounded-xl bg-red-500 w-3 h-3 mr-2 inline-block"></div>
+                  <div className="rounded-xl bg-gray-500 w-3 h-3 mr-2 inline-block"></div>
                   Offline
                 </Badge>
               );
           }
+        },
+      },
+      {
+        accessorKey: "lastHeartbeatTimestamp",
+        header: "Last seen",
+        cell: ({ row }) => {
+          return moment(row.original.lastHeartbeatTimestamp).fromNow();
         },
       },
       {

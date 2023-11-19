@@ -28,11 +28,11 @@ func (s *AuthService) Authenticate(ctx context.Context, req *rpc.AuthenticateReq
 		// when using a token, the agent must have already been authenticated
 		// and will already exist in the database. We issue a token as long as
 		// the current token is valid.
-		err := s.signer.ValidateToken(req.Token)
+		agentID, err := s.signer.ValidateToken(req.Token)
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, err.Error())
 		}
-		tk, err := s.signer.NewToken()
+		tk, err := s.signer.NewToken(agentID)
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, err.Error())
 		}
@@ -45,7 +45,7 @@ func (s *AuthService) Authenticate(ctx context.Context, req *rpc.AuthenticateReq
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
-		tk, err := s.signer.NewToken()
+		tk, err := s.signer.NewToken(agentID)
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, err.Error())
 		}

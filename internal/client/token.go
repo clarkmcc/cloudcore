@@ -47,7 +47,11 @@ type tokenManager struct {
 	client *Client
 }
 
-func (m *tokenManager) getAuthToken(ctx context.Context) (string, error) {
+// getAuthTokenLocked returns the current auth token, or generates a new one if
+// the current token is expired or expiring soon. Callers should be sure to hold
+// the Client's lock before calling this method, since this method depends on the
+// client and an active gRPC connection in order to acquire a new token.
+func (m *tokenManager) getAuthTokenLocked(ctx context.Context) (string, error) {
 	tk, err := m.db.AuthToken(ctx)
 	if err != nil && !errors.Is(err, agentdb.ErrAuthTokenNotFound) {
 		return "", err
@@ -63,7 +67,7 @@ func (m *tokenManager) getAuthToken(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "", nil
+	return tk.Token, nil
 }
 
 func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *agentdb.AuthToken) (*agentdb.AuthToken, error) {
@@ -93,7 +97,7 @@ func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *agentdb.Aut
 		return nil, err
 	}
 
-	c, err := m.client.getAuthClient(ctx)
+	c, err := m.client.getAuthClientLocked(ctx)
 	if err != nil {
 		return nil, err
 	}

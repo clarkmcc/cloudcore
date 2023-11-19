@@ -29,7 +29,7 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 		SELECT id, project_id, created_at, updated_at, name, key, status, uses_remaining, expiration FROM agent_psk 
 		WHERE key = $1
 		  	AND status = 'active'
-			AND uses_remaining > 0
+			AND (uses_remaining IS NULL OR uses_remaining > 0)
 			AND (expiration IS NULL OR expiration > NOW())
 		LIMIT 1
 	`, key)
@@ -130,6 +130,20 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 		}
 	}
 	return agentID, tx.Commit()
+}
+
+func (d *Database) Heartbeat(ctx context.Context, agentID string) error {
+	_, err := d.db.ExecContext(ctx, `
+		UPDATE agent SET last_heartbeat_timestamp = $1, online = true WHERE id = $2;
+	`, time.Now(), agentID)
+	return err
+}
+
+func (d *Database) SetOffline(ctx context.Context, agentID string) error {
+	_, err := d.db.ExecContext(ctx, `
+		UPDATE agent SET online = false WHERE id = $1;
+	`, agentID)
+	return err
 }
 
 func handleRollback(err *error, tx *sqlx.Tx) {

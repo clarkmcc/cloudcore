@@ -7,6 +7,7 @@ import (
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database/cockroachdb"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database/types"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
+	"go.uber.org/zap"
 )
 
 type Database interface {
@@ -19,6 +20,13 @@ type Database interface {
 	// and returns the agent ID if the agent is authenticated. This function will upsert
 	// the agent, the host, and add the agent to the appropriate groups.
 	AuthenticateAgent(ctx context.Context, psk string, md *rpc.SystemMetadata) (string, error)
+
+	// Heartbeat updates the last heartbeat timestamp for the agent with the given agent ID.
+	Heartbeat(ctx context.Context, agentID string) error
+
+	// SetOffline sets an agent as offline. This is used to handle specific cases where an agent
+	// receives a signal to shut down, and we want to mark it as offline.
+	SetOffline(ctx context.Context, agentID string) error
 
 	AppDatabase
 }
