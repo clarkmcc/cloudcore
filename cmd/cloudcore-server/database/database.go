@@ -10,7 +10,7 @@ import (
 )
 
 type Database interface {
-	Migrate() error
+	Migrate(ctx context.Context) error
 
 	// UpdateMetadata upserts the host and agent with all the associated host metadata
 	//UpdateMetadata(context.Context, *rpc.SystemMetadata) (string, error)
@@ -42,10 +42,10 @@ type AppDatabase interface {
 	ListProjectHosts(ctx context.Context, projectId string) ([]types.Host, error)
 }
 
-func New(cfg *config.Config) (Database, error) {
+func New(cfg *config.Config, logger *zap.Logger) (Database, error) {
 	switch cfg.Database.Type {
 	case config.DatabaseTypeCockroachDB:
-		return cockroachdb.New(cfg)
+		return cockroachdb.New(cfg, logger)
 	default:
 		return nil, fmt.Errorf("unknown database type: %s", cfg.Database.Type)
 	}

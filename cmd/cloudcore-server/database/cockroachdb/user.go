@@ -27,16 +27,32 @@ func (d *Database) UpsertUser(ctx context.Context, subject string) ([]types.Proj
 	}
 
 	// At this point, we're creating a new tenant, project, and user
-	var tenantId string
-	err = tx.QueryRowx(`INSERT INTO tenant (name) VALUES ($1) RETURNING id`, subject).Scan(&tenantId)
+	isDevMode, err := d.isDevMode(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("creating tenant: %w", err)
+		return nil, fmt.Errorf("checking dev mode: %w", err)
 	}
 
+	var tenantId string
 	var project types.Project
-	err = tx.QueryRowx(`INSERT INTO project (name, tenant_id) VALUES ('Default', $1) RETURNING *`, tenantId).StructScan(&project)
-	if err != nil {
-		return nil, fmt.Errorf("creating project: %w", err)
+	if isDevMode {
+		// In dev mode, we add all the users to the default tenant and project
+		err = tx.QueryRowx(`SELECT id FROM tenant WHERE name = 'Default' LIMIT 1;`).Scan(&tenantId)
+		if err != nil {
+			return nil, fmt.Errorf("getting default tenant: %w", err)
+		}
+		err = tx.QueryRowx(`SELECT * FROM project WHERE name = 'Default' AND tenant_id = $1 LIMIT 1;`, tenantId).StructScan(&project)
+		if err != nil {
+			return nil, fmt.Errorf("getting default project: %w", err)
+		}
+	} else {
+		err = tx.QueryRowx(`INSERT INTO tenant (name) VALUES ($1) RETURNING id`, subject).Scan(&tenantId)
+		if err != nil {
+			return nil, fmt.Errorf("creating tenant: %w", err)
+		}
+		err = tx.QueryRowx(`INSERT INTO project (name, tenant_id) VALUES ('Default', $1) RETURNING *`, tenantId).StructScan(&project)
+		if err != nil {
+			return nil, fmt.Errorf("creating project: %w", err)
+		}
 	}
 
 	var userId string
@@ -68,4 +84,9 @@ func (d *Database) CanAccessProject(ctx context.Context, subject, projectId stri
 		return false, nil
 	}
 	return false, err
+}
+
+func (d *Database) isDevMode(ctx context.Context) (bool, error) {
+	var isDevMode bool
+	return isDevMode, d.db.QueryRowxContext(ctx, `SELECT is_dev_mode FROM global_state LIMIT 1;`).Scan(&isDevMode)
 }

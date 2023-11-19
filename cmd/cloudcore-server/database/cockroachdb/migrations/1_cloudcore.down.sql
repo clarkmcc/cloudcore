@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS "global_state";
 DROP TABLE IF EXISTS "agent_group_psk";
 DROP TABLE IF EXISTS "agent_group_member";
 DROP TABLE IF EXISTS "agent_group";

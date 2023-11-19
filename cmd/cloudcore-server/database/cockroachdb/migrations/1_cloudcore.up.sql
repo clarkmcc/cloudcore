@@ -1,6 +1,12 @@
 -- Status enum for soft deletes
 CREATE TYPE IF NOT EXISTS "status" AS ENUM ('active', 'deleted');
 
+CREATE TABLE IF NOT EXISTS "global_state" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "is_dev_mode" BOOL NOT NULL DEFAULT FALSE,
+    PRIMARY KEY ("id")
+);
+
 -- If cloud-hosted, a tenant represents a user and allows for better optimized
 -- or geo-located queries using data-domiciling techniques.
 CREATE TABLE IF NOT EXISTS "tenant" (
@@ -179,4 +185,4 @@ CREATE TABLE IF NOT EXISTS "agent_group_psk" (
 -- Create the default data
 INSERT INTO "tenant" ("name", "description") VALUES ('Default', 'Default tenant');
 INSERT INTO "project" ("tenant_id", "name", "description") VALUES ((SELECT "id" FROM "tenant" WHERE "name" = 'Default'), 'Default', 'Default project');
-
+INSERT INTO "global_state" ("is_dev_mode") VALUES (FALSE);
