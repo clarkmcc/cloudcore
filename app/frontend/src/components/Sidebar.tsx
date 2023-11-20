@@ -19,20 +19,23 @@ export function Sidebar({ className }: SidebarProps) {
   const { user, logout } = useAuth0();
   const navigate = useProjectNavigate();
 
-  const link = useCallback((page: string): Partial<ButtonProps> => {
-    // Returns true if the sidebar link is selected. Has a special case for
-    // the home page, which is selected if the current path is just the root
-    // of a selected project.
-    const isSelected =
-      page !== "/"
-        ? window.location.pathname.endsWith(page)
-        : matchPath("/projects/:projectId", window.location.pathname);
-    return {
-      className: "w-full justify-start",
-      variant: isSelected ? "secondary" : "ghost",
-      onClick: () => navigate(page),
-    };
-  }, []);
+  const link = useCallback(
+    (page: string): Partial<ButtonProps> => {
+      // Returns true if the sidebar link is selected. Has a special case for
+      // the home page, which is selected if the current path is just the root
+      // of a selected project.
+      const isSelected =
+        page !== "/"
+          ? window.location.pathname.endsWith(page)
+          : matchPath("/projects/:projectId", window.location.pathname);
+      return {
+        className: "w-full justify-start",
+        variant: isSelected ? "secondary" : "ghost",
+        onClick: () => navigate(page),
+      };
+    },
+    [navigate],
+  );
 
   function handleLogout() {
     logout({
