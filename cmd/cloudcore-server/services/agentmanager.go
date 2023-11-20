@@ -42,7 +42,11 @@ func (s *AgentManagerService) Notifications(srv rpc.AgentManager_NotificationsSe
 		case rpc.ClientNotification_HEARTBEAT:
 			return s.db.Heartbeat(srv.Context(), agentID)
 		case rpc.ClientNotification_AGENT_SHUTDOWN:
-			return s.db.SetOffline(context.Background(), agentID)
+			// use background context in case client connection closes before
+			// we're able to finish what we need to do.
+			return s.db.AgentShutdown(context.Background(), agentID)
+		case rpc.ClientNotification_AGENT_STARTUP:
+			return s.db.AgentStartup(srv.Context(), agentID)
 		default:
 			return nil
 		}
@@ -75,6 +79,7 @@ func (s *AgentManagerService) handleNotifications(srv rpc.AgentManager_Notificat
 		case err := <-errs:
 			if err != nil {
 				if errors.Is(err, io.EOF) {
+					logger.Debug("client closed notifications stream", zap.String("agent", agentID))
 					return nil
 				}
 				return err

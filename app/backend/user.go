@@ -9,7 +9,7 @@ import (
 var ensureUser = &graphql.Field{
 	Type: graphql.NewList(projectType),
 	Args: graphql.FieldConfigArgument{},
-	Resolve: wrapper(func(rctx resolveContext) ([]types.Project, error) {
+	Resolve: wrapper[any](func(rctx resolveContext[any]) ([]types.Project, error) {
 		return rctx.db.UpsertUser(rctx, middleware.SubjectFromContext(rctx))
 	}),
 }

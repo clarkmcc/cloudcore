@@ -27,18 +27,19 @@ func db(ctx context.Context) database.Database {
 	return ctx.Value(contextKeyDatabase).(database.Database)
 }
 
-type resolveContext struct {
+type resolveContext[S any] struct {
 	context.Context
 	db     database.Database
 	params graphql.ResolveParams
 	logger *zap.Logger
+	source S
 }
 
-func (r *resolveContext) getStringArg(name string) string {
+func (r *resolveContext[S]) getStringArg(name string) string {
 	return cast.ToString(r.params.Args[name])
 }
 
-func (r *resolveContext) canAccessProject(projectId string) error {
+func (r *resolveContext[S]) canAccessProject(projectId string) error {
 	sub := middleware.SubjectFromContext(r)
 	if sub == "" {
 		return fmt.Errorf("no subject in context")
@@ -53,15 +54,21 @@ func (r *resolveContext) canAccessProject(projectId string) error {
 	return nil
 }
 
-type resolverFunc[T any] func(rctx resolveContext) (T, error)
+type resolverFunc[T any, S any] func(rctx resolveContext[S]) (T, error)
 
-func wrapper[T any](fn resolverFunc[T]) func(params graphql.ResolveParams) (any, error) {
+func wrapper[S any, T any](fn resolverFunc[T, S]) func(params graphql.ResolveParams) (any, error) {
 	return func(params graphql.ResolveParams) (any, error) {
 		ctx := params.Context
-		return fn(resolveContext{
+		source, ok := params.Source.(S)
+		if !ok {
+			var s S
+			return nil, fmt.Errorf("invalid source type: %T, expected %T", params.Source, s)
+		}
+		return fn(resolveContext[S]{
 			Context: ctx,
 			db:      db(ctx),
 			logger:  logger(ctx),
+			source:  source,
 			params:  params,
 		})
 	}

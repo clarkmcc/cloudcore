@@ -28,3 +28,11 @@ func (d *Database) ListProjectHosts(ctx context.Context, projectId string) (out 
 	}
 	return out, nil
 }
+
+func (d *Database) GetHost(ctx context.Context, hostId, projectId string) (out types.Host, err error) {
+	return out, d.db.GetContext(ctx, &out, `SELECT * FROM host WHERE id = $1 AND project_id = $2`, hostId, projectId)
+}
+
+func (d *Database) GetEventLogsByHost(ctx context.Context, hostId string, limit int) (out []types.AgentEventLog, err error) {
+	return out, d.db.SelectContext(ctx, &out, `SELECT * FROM agent_event WHERE host_id = $1 ORDER BY created_at DESC LIMIT $2`, hostId, limit)
+}

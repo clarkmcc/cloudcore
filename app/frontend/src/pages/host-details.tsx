@@ -5,40 +5,62 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card.tsx";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import { QUERY_HOST_DETAILS } from "@/queries/hosts.ts";
+import { ErrorBanner } from "@/components/error-banner.tsx";
+import { ShieldCheck, TerminalSquare, Unlink } from "lucide-react";
+import { HostEventTable } from "@/components/host-event-table.tsx";
+import { Button } from "@/components/ui/button.tsx";
 
 export function HostDetails() {
+  const { hostId, projectId } = useParams();
+  const missingParams = hostId == null || projectId == null;
+  const { data, loading, error } = useQuery(QUERY_HOST_DETAILS, {
+    variables: { hostId, projectId },
+    skip: missingParams,
+    pollInterval: 10000,
+  });
+
+  if (missingParams) {
+    return <p>No host</p>;
+  }
+  if (error) {
+    return (
+      <div className="p-7">
+        <ErrorBanner error={error} />
+      </div>
+    );
+  }
+
   return (
     <>
       <PageHeader
-        title="Clark's MacBook Pro"
-        subtitle="d4d1dedb-445a-4e1c-9a41-00719755c45a"
+        loading={loading}
+        title={data?.host?.hostname}
+        subtitle={data?.host?.hostId ?? data?.host?.id}
+        backButton
       />
 
       <div className="px-7">
+        <div className="mb-4 space-x-4">
+          <Button>
+            <TerminalSquare className="mr-2 h-4 w-4" />
+            Connect
+          </Button>
+          <Button variant="destructive" disabled>
+            <Unlink className="mr-2 h-4 w-4" />
+            Revoke Access
+          </Button>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card className="md:col-span-4 lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Revenue
-              </CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
+              <CardTitle className="text-sm font-medium">Audit Logs</CardTitle>
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$45,231.89</div>
-              <p className="text-xs text-muted-foreground">
-                +20.1% from last month
-              </p>
+              <HostEventTable events={data?.host?.events ?? []} />
             </CardContent>
           </Card>
         </div>

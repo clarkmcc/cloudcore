@@ -47,7 +47,7 @@ var projectCreate = &graphql.Field{
 			Type: graphql.String,
 		},
 	},
-	Resolve: wrapper(func(rctx resolveContext) (map[string]any, error) {
+	Resolve: wrapper[any](func(rctx resolveContext[any]) (map[string]any, error) {
 		sub := middleware.SubjectFromContext(rctx)
 		project, err := rctx.db.CreateProject(rctx, sub,
 			rctx.getStringArg("name"),

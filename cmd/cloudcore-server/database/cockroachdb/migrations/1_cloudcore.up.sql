@@ -130,6 +130,23 @@ CREATE TABLE IF NOT EXISTS "agent_psk" (
     UNIQUE INDEX "key_idx" ("key")
 );
 
+CREATE TYPE IF NOT EXISTS "agent_event_type" AS ENUM ('AGENT_STARTUP', 'AGENT_SHUTDOWN');
+
+CREATE TABLE IF NOT EXISTS "agent_event" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "project_id" UUID NOT NULL,
+    "agent_id" UUID NOT NULL,
+    "host_id" UUID NOT NULL,
+    "type" AGENT_EVENT_TYPE NOT NULL,
+    "message" STRING NOT NULL,
+
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
+    FOREIGN KEY ("host_id") REFERENCES "host" ("id") ON DELETE CASCADE,
+    FOREIGN KEY ("agent_id") REFERENCES "agent" ("id") ON DELETE CASCADE
+);
+
 -- A group of agents that can be targeted for reasons
 CREATE TABLE IF NOT EXISTS "agent_group" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),

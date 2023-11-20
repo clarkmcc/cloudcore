@@ -25,7 +25,8 @@ var hostType = graphql.NewObject(graphql.ObjectConfig{
 			Type: graphql.NewNonNull(graphql.Boolean),
 			Resolve: func(p graphql.ResolveParams) (any, error) {
 				h := p.Source.(types.Host)
-				if h.LastHeartbeatTimestamp.After(time.Now().Add(-time.Hour)) && h.Online {
+				// todo: make this configurable
+				if h.LastHeartbeatTimestamp.After(time.Now().Add(-time.Minute)) && h.Online {
 					return true, nil
 				}
 				return false, nil
@@ -75,6 +76,13 @@ var hostType = graphql.NewObject(graphql.ObjectConfig{
 			Type:        nullInt64Type,
 			Description: "The number of CPU cores (i.e. 10).",
 		},
+		"events": &graphql.Field{
+			Type:        graphql.NewList(agentEvent),
+			Description: "The events for the host and its agent.",
+			Resolve: wrapper[types.Host](func(rctx resolveContext[types.Host]) ([]types.AgentEventLog, error) {
+				return rctx.db.GetEventLogsByHost(rctx, rctx.source.ID, 15)
+			}),
+		},
 	},
 })
 
@@ -85,12 +93,56 @@ var hostList = &graphql.Field{
 			Type: graphql.NewNonNull(graphql.String),
 		},
 	},
-	Resolve: wrapper(func(rctx resolveContext) ([]types.Host, error) {
+	Resolve: wrapper[any](func(rctx resolveContext[any]) ([]types.Host, error) {
 		projectID := rctx.getStringArg("projectId")
 		err := rctx.canAccessProject(projectID)
 		if err != nil {
 			return nil, err
 		}
 		return rctx.db.ListProjectHosts(rctx, projectID)
+	}),
+}
+
+var agentEvent = graphql.NewObject(graphql.ObjectConfig{
+	Name: "AgentEvent",
+	Fields: graphql.Fields{
+		"id": &graphql.Field{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"createdAt": &graphql.Field{
+			Type: graphql.NewNonNull(graphql.DateTime),
+		},
+		"agentId": &graphql.Field{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"hostId": &graphql.Field{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"type": &graphql.Field{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"message": &graphql.Field{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+	},
+})
+
+var hostDetails = &graphql.Field{
+	Type: hostType,
+	Args: graphql.FieldConfigArgument{
+		"hostId": &graphql.ArgumentConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"projectId": &graphql.ArgumentConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+	},
+	Resolve: wrapper[any](func(rctx resolveContext[any]) (types.Host, error) {
+		projectID := rctx.getStringArg("projectId")
+		err := rctx.canAccessProject(projectID)
+		if err != nil {
+			return types.Host{}, err
+		}
+		return rctx.db.GetHost(rctx, rctx.getStringArg("hostId"), projectID)
 	}),
 }

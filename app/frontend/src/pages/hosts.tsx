@@ -7,12 +7,20 @@ import { QUERY_HOSTS_LIST } from "@/queries/hosts.ts";
 import { useProjectId } from "@/hooks/navigation.ts";
 import { ErrorBanner } from "@/components/error-banner.tsx";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useEffect } from "react";
 
 export function HostsPage() {
   const [projectId] = useProjectId();
-  const { data, loading, error } = useQuery(QUERY_HOSTS_LIST, {
+  const { data, loading, error, refetch } = useQuery(QUERY_HOSTS_LIST, {
     variables: { projectId },
+    refetchWritePolicy: "merge",
+    pollInterval: 10000,
   });
+
+  // Refetch on page load
+  useEffect(() => {
+    refetch().catch(console.error);
+  }, [refetch]);
 
   return (
     <>

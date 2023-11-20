@@ -1,3 +1,5 @@
+import { AgentEventType } from "@/types/enums.ts";
+
 export type Project = {
   id: string;
   name: string;
@@ -20,4 +22,11 @@ export type Host = {
   kernelVersion?: string;
   cpuModel?: string;
   cpuCores?: number;
+};
+
+export type AgentEvent = {
+  id: string;
+  createdAt: string;
+  type: AgentEventType;
+  message: string;
 };

@@ -5,32 +5,44 @@ schema {
     mutation: Mutation
 }
 
+type AgentEvent {
+    agentId: String!
+    createdAt: DateTime!
+    eventType: String!
+    hostId: String!
+    id: String!
+    message: String!
+}
+
 type Host {
     "The number of CPU cores (i.e. 10)."
-    cpuCores: Int
+    cpuCores: NullInt64
     "The model of the CPU (i.e. Apple M1 Max)."
-    cpuModel: String
+    cpuModel: NullString
     createdAt: DateTime!
+    "The events for the host and its agent."
+    events: [AgentEvent]
     "The hostname of the host."
-    hostname: String
+    hostname: NullString
     id: String!
     "An identifier for the host as determined by the agent. This is usually extracted from the host somehow (i.e. a Host ID)."
     identifier: String!
     "The architecture of the kernel (i.e. arm64)."
-    kernelArchitecture: String
+    kernelArchitecture: NullString
     "The version of the kernel (i.e. 23.0.0)."
-    kernelVersion: String
+    kernelVersion: NullString
+    lastHeartbeatTimestamp: DateTime!
+    online: Boolean!
     "The family of the operating system (i.e. Standalone Workstation)."
-    osFamily: String
+    osFamily: NullString
     "The name of the operating system (i.e. darwin)."
-    osName: String
+    osName: NullString
     "The version of the operating system (i.e. 14.0)."
-    osVersion: String
+    osVersion: NullString
     "The private IP address of the host."
-    privateIpAddress: String
+    privateIpAddress: NullString
     "The public IP address of the host."
-    publicIpAddress: String
-    status: Status!
+    publicIpAddress: NullString
     updatedAt: DateTime!
 }
 
@@ -53,6 +65,7 @@ type ProjectCreate {
 }
 
 type Query {
+    host(hostId: String!, projectId: String!): Host
     hosts(projectId: String!): [Host]
 }
 
@@ -63,3 +76,7 @@ enum Status {
 
 "The `DateTime` scalar type represents a DateTime. The DateTime is serialized as an RFC 3339 quoted string"
 scalar DateTime
+
+scalar NullInt64
+
+scalar NullString

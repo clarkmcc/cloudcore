@@ -139,11 +139,61 @@ func (d *Database) Heartbeat(ctx context.Context, agentID string) error {
 	return err
 }
 
-func (d *Database) SetOffline(ctx context.Context, agentID string) error {
-	_, err := d.db.ExecContext(ctx, `
+func (d *Database) AgentShutdown(ctx context.Context, agentID string) error {
+	tx, err := d.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer handleRollback(&err, tx)
+
+	_, err = tx.ExecContext(ctx, `
 		UPDATE agent SET online = false WHERE id = $1;
 	`, agentID)
-	return err
+	err = d.addAgentEvent(tx, agentID, types.AgentEventType_AGENT_SHUTDOWN, "Agent stopped")
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (d *Database) AgentStartup(ctx context.Context, agentID string) error {
+	tx, err := d.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer handleRollback(&err, tx)
+
+	_, err = tx.ExecContext(ctx, `
+		UPDATE agent SET online = true WHERE id = $1;
+	`, agentID)
+	err = d.addAgentEvent(tx, agentID, types.AgentEventType_AGENT_STARTUP, "Agent started")
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// hostAuditLog records an audit log entry for the agent and host
+func (d *Database) addAgentEvent(tx *sqlx.Tx, agentID string, event types.AgentEventType, message string) error {
+	_, err := tx.NamedExec(`
+		INSERT INTO agent_event (project_id, agent_id, host_id, type, message)
+		VALUES (
+		        (SELECT project_id FROM agent WHERE id = :agent_id), 
+		        :agent_id, 
+		        (SELECT agent.host_id FROM agent WHERE id = :agent_id), 
+		        :type, 
+		        :message);
+	`, map[string]any{
+		"agent_id": agentID,
+		"type":     event,
+		"message":  message,
+	})
+	if err != nil {
+		return fmt.Errorf("recording agent audit log: %w", err)
+	}
+	return nil
 }
 
 func handleRollback(err *error, tx *sqlx.Tx) {

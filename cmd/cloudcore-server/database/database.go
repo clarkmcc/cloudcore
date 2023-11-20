@@ -24,9 +24,12 @@ type Database interface {
 	// Heartbeat updates the last heartbeat timestamp for the agent with the given agent ID.
 	Heartbeat(ctx context.Context, agentID string) error
 
-	// SetOffline sets an agent as offline. This is used to handle specific cases where an agent
+	// AgentShutdown sets an agent as offline. This is used to handle specific cases where an agent
 	// receives a signal to shut down, and we want to mark it as offline.
-	SetOffline(ctx context.Context, agentID string) error
+	AgentShutdown(ctx context.Context, agentID string) error
+
+	// AgentStartup sets an agent as online.
+	AgentStartup(ctx context.Context, agentID string) error
 
 	AppDatabase
 }
@@ -48,6 +51,12 @@ type AppDatabase interface {
 
 	// ListProjectHosts returns all the hosts in a project with the given project ID.
 	ListProjectHosts(ctx context.Context, projectId string) ([]types.Host, error)
+
+	// GetHost returns the host with the given host ID and project ID.
+	GetHost(ctx context.Context, hostId, projectId string) (types.Host, error)
+
+	// GetEventLogsByHost returns the events logs for the host with the given host ID.
+	GetEventLogsByHost(ctx context.Context, hostId string, limit int) (out []types.AgentEventLog, err error)
 }
 
 func New(cfg *config.Config, logger *zap.Logger) (Database, error) {
