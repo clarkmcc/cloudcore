@@ -16,6 +16,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         scope: "openid profile email",
       }}
       useRefreshTokens={true}
+      useRefreshTokensFallback={true}
       cacheLocation="localstorage"
     >
       <ThemeProvider defaultTheme="dark" storageKey="theme">

@@ -20,11 +20,9 @@ import { HostDetails } from "@/pages/host-details.tsx";
 function Container() {
   useEnsureUser();
   return (
-    <div className="grid grid-cols-12 h-full">
-      <div className="col-span-6 sm:col-span-3 md:col-span-2 border-r">
-        <Sidebar />
-      </div>
-      <div className="col-span-6 sm:col-span-9 md:col-span-10">
+    <div className="flex flex-row h-full">
+      <Sidebar className="max-w-[200px]"/>
+      <div className="border-l w-full">
         <Outlet />
       </div>
     </div>

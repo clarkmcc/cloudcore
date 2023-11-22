@@ -2,17 +2,17 @@ package main
 
 import (
 	"context"
+	"github.com/clarkmcc/brpc"
 	appbackend "github.com/clarkmcc/cloudcore/app/backend"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/server"
-	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/services"
 	"github.com/clarkmcc/cloudcore/internal/logger"
+	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/clarkmcc/cloudcore/internal/token"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"os"
 	"os/signal"
 )
@@ -25,9 +25,6 @@ func main() {
 		fx.Provide(config.New),
 		fx.Provide(token.NewSigner),
 		fx.Provide(database.New),
-		fx.Provide(services.NewAuthService),
-		fx.Provide(services.NewAgentManagerService),
-		fx.Provide(server.Listener),
 		fx.Provide(appbackend.New),
 		fx.Provide(server.New),
 		fx.Provide(func(config *config.Config) *zap.Logger {
@@ -39,7 +36,7 @@ func main() {
 		fx.Invoke(func(ctx context.Context, db database.Database) error {
 			return db.Migrate(ctx)
 		}),
-		fx.Invoke(func(_ *grpc.Server) {}),
+		fx.Invoke(func(_ *brpc.Server[rpc.AgentClient]) {}),
 		fx.Invoke(func(_ *appbackend.Server) {}),
 	)
 	err := app.Err()

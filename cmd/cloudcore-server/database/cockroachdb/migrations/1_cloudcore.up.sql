@@ -105,6 +105,11 @@ CREATE TABLE IF NOT EXISTS "agent" (
     "online" BOOL NOT NULL,
     "last_heartbeat_timestamp" TIMESTAMPTZ NOT NULL,
 
+    -- The Go GOOS compile time env variable
+    "goos" STRING NOT NULL,
+    -- The Go GOARCH compile time env variable
+    "goarch" STRING NOT NULL,
+
     PRIMARY KEY ("id"),
     FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
     FOREIGN KEY ("host_id") REFERENCES "host" ("id") ON DELETE CASCADE

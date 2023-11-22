@@ -56,7 +56,7 @@ export function HostDetails() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="md:col-span-4 lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Audit Logs</CardTitle>
+              <CardTitle className="text-sm font-medium">Events</CardTitle>
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>

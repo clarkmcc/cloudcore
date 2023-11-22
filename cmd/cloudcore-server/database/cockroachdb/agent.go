@@ -14,6 +14,7 @@ import (
 var (
 	ErrAgentNotFound        = errors.New("agent not found")
 	ErrPreSharedKeyNotFound = errors.New("pre-shared key not found")
+	ErrAgentDeactivated     = errors.New("agent deactivated")
 )
 
 func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *rpc.SystemMetadata) (agentID string, err error) {
@@ -59,9 +60,9 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 
 	// First, we upsert the host on the identifier field
 	rows, err := tx.NamedQuery(`
-		INSERT INTO host (project_id, identifier, hostname, host_id, public_ip_address, os_name, os_family, os_version, kernel_architecture, kernel_version, cpu_model, cpu_cores)
-		VALUES(:project_id, :identifier, :hostname, :host_id, :public_ip_address, :os_name, :os_family, :os_version, :kernel_architecture, :kernel_version, :cpu_model, :cpu_cores)
-		ON CONFLICT (identifier) DO UPDATE SET hostname = :hostname, host_id = :host_id, public_ip_address = :public_ip_address, os_name = :os_name, os_family = :os_family, os_version = :os_version, kernel_architecture = :kernel_architecture, kernel_version = :kernel_version, cpu_model = :cpu_model, cpu_cores = :cpu_cores
+		INSERT INTO host (project_id, identifier, hostname, host_id, public_ip_address, private_ip_address, os_name, os_family, os_version, kernel_architecture, kernel_version, cpu_model, cpu_cores)
+		VALUES(:project_id, :identifier, :hostname, :host_id, :public_ip_address, :private_ip_address, :os_name, :os_family, :os_version, :kernel_architecture, :kernel_version, :cpu_model, :cpu_cores)
+		ON CONFLICT (identifier) DO UPDATE SET hostname = :hostname, host_id = :host_id, public_ip_address = :public_ip_address, private_ip_address = :private_ip_address, os_name = :os_name, os_family = :os_family, os_version = :os_version, kernel_architecture = :kernel_architecture, kernel_version = :kernel_version, cpu_model = :cpu_model, cpu_cores = :cpu_cores
 		RETURNING id
 	`, map[string]any{
 		"project_id":          psk.ProjectID,
@@ -69,6 +70,7 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 		"hostname":            metadata.GetIdentifiers().GetHostname(),
 		"host_id":             metadata.GetIdentifiers().GetHostId(),
 		"public_ip_address":   metadata.GetIdentifiers().GetPublicIpAddress(),
+		"private_ip_address":  metadata.GetIdentifiers().GetPrivateIpAddress(),
 		"os_name":             metadata.GetOs().GetName(),
 		"os_family":           metadata.GetOs().GetFamily(),
 		"os_version":          metadata.GetOs().GetVersion(),
@@ -89,14 +91,16 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 	agentID = metadata.GetIdentifiers().GetAgentIdentifier()
 	if len(agentID) == 0 {
 		rows, err = tx.NamedQuery(`
-		INSERT INTO agent (project_id, host_id, online, last_heartbeat_timestamp)
-		VALUES (:project_id, :host_id, :online, :last_heartbeat_timestamp)
+		INSERT INTO agent (project_id, host_id, online, last_heartbeat_timestamp, goos, goarch)
+		VALUES (:project_id, :host_id, :online, :last_heartbeat_timestamp, :goos, :goarch)
 		RETURNING id
 	`, map[string]any{
 			"project_id":               psk.ProjectID,
 			"host_id":                  hostID,
 			"online":                   true,
 			"last_heartbeat_timestamp": time.Now(),
+			"goos":                     metadata.GetOs().GetGoos(),
+			"goarch":                   metadata.GetOs().GetGoarch(),
 		})
 		if err != nil {
 			return "", err
@@ -133,10 +137,18 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 }
 
 func (d *Database) Heartbeat(ctx context.Context, agentID string) error {
-	_, err := d.db.ExecContext(ctx, `
-		UPDATE agent SET last_heartbeat_timestamp = $1, online = true WHERE id = $2;
+	var status types.Status
+	row := d.db.QueryRowxContext(ctx, `
+		UPDATE agent SET last_heartbeat_timestamp = $1, online = true WHERE id = $2 RETURNING status;
 	`, time.Now(), agentID)
-	return err
+	err := row.Scan(&status)
+	if err != nil {
+		return fmt.Errorf("updating agent heartbeat: %w", err)
+	}
+	if status != types.StatusActive {
+		return rpc.ErrAgentDeactivated
+	}
+	return nil
 }
 
 func (d *Database) AgentShutdown(ctx context.Context, agentID string) error {
@@ -165,7 +177,7 @@ func (d *Database) AgentStartup(ctx context.Context, agentID string) error {
 	defer handleRollback(&err, tx)
 
 	_, err = tx.ExecContext(ctx, `
-		UPDATE agent SET online = true WHERE id = $1;
+		UPDATE agent SET online = true WHERE id = $1 AND status = 'active';
 	`, agentID)
 	err = d.addAgentEvent(tx, agentID, types.AgentEventType_AGENT_STARTUP, "Agent started")
 	if err != nil {

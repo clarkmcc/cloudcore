@@ -2,16 +2,12 @@ package services
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"github.com/clarkmcc/brpc"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/clarkmcc/cloudcore/internal/token"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"io"
 )
 
 type AgentManagerService struct {
@@ -20,6 +16,7 @@ type AgentManagerService struct {
 	signer   *token.Signer
 	db       database.Database
 	shutdown <-chan struct{}
+	server   *brpc.Server[rpc.AgentClient]
 
 	rpc.UnimplementedAgentManagerServer
 }
@@ -53,61 +50,13 @@ func (s *AgentManagerService) Notifications(srv rpc.AgentManager_NotificationsSe
 	})
 }
 
-func NewAgentManagerService(ctx context.Context, config *config.Config, logger *zap.Logger, signer *token.Signer, db database.Database) *AgentManagerService {
+func NewAgentManagerService(ctx context.Context, config *config.Config, logger *zap.Logger, signer *token.Signer, db database.Database, server *brpc.Server[rpc.AgentClient]) *AgentManagerService {
 	return &AgentManagerService{
+		server:   server,
 		shutdown: ctx.Done(),
 		logger:   logger.Named("agent-manager"),
 		config:   config,
 		signer:   signer,
 		db:       db,
 	}
-}
-
-func (s *AgentManagerService) handleNotifications(srv rpc.AgentManager_NotificationsServer, handler func(agentId string, notification *rpc.ClientNotification) error) error {
-	agentID, err := s.signer.ValidateRequest(srv.Context())
-	if err != nil {
-		return status.Error(codes.Unauthenticated, err.Error())
-	}
-	logger := s.logger.Named("notifications")
-	for {
-		ns, errs := receive(srv.Recv)
-		select {
-		case <-s.shutdown:
-			return fmt.Errorf("server shutdown")
-		case <-srv.Context().Done():
-			return srv.Context().Err()
-		case err := <-errs:
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					logger.Debug("client closed notifications stream", zap.String("agent", agentID))
-					return nil
-				}
-				return err
-			}
-		case n := <-ns:
-			logger.Debug("received notification",
-				zap.String("notification", n.GetType().String()),
-				zap.String("agent", agentID))
-			err = handler(agentID, n)
-			if err != nil {
-				logger.Warn("failed to handle notification", zap.Error(err))
-				continue
-			}
-		}
-	}
-}
-
-func receive[T any](recv func() (T, error)) (<-chan T, <-chan error) {
-	ch := make(chan T)
-	errs := make(chan error)
-	go func() {
-		defer close(ch)
-		v, err := recv()
-		if err != nil {
-			errs <- err
-			return
-		}
-		ch <- v
-	}()
-	return ch, errs
 }

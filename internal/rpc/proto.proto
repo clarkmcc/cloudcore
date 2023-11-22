@@ -36,8 +36,6 @@ message PingRequest {}
 message PingResponse {}
 
 service AgentManager {
-  rpc UploadMetadata(UploadMetadataRequest) returns (UploadMetadataResponse);
-
   rpc Notifications(stream ClientNotification) returns (stream ServerNotification);
 }
 
@@ -61,11 +59,15 @@ message SystemMetadata {
     string host_id = 3;
     string hostname = 4;
     string public_ip_address = 5;
+    string private_ip_address = 6;
   }
   message OperatingSystem {
     string name = 1;
     string family = 2;
     string version = 3;
+
+    string goos = 10; // runtime.GOOS
+    string goarch = 11; // runtime.GOARCH
   }
   message Kernel {
     string arch = 1;
@@ -97,3 +99,14 @@ message ServerNotification {
     UNKNOWN = 0;
   }
 }
+
+// The gRPC (bRPC) service that runs on the agent and is exposed to the server
+service Agent {
+  // Shutdown is called when the server wants the agent to shutdown
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+}
+
+message ShutdownRequest {
+  bool permanent = 1;
+}
+message ShutdownResponse {}

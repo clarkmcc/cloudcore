@@ -10,9 +10,11 @@ import (
 	"github.com/shirou/gopsutil/v3/host"
 	"go.uber.org/zap"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
+	"runtime"
 )
 
 var (
@@ -42,6 +44,10 @@ func BuildSystemMetadata(ctx context.Context, db agentdb.AgentDB, logger *zap.Lo
 	if err != nil {
 		logger.Warn("failed to get public ip address", zap.Error(err))
 	}
+	s.Identifiers.PrivateIpAddress, err = getPrivateIpAddress()
+	if err != nil {
+		logger.Warn("failed to get private ip address", zap.Error(err))
+	}
 
 	info, err := host.InfoWithContext(ctx)
 	if err != nil {
@@ -53,6 +59,8 @@ func BuildSystemMetadata(ctx context.Context, db agentdb.AgentDB, logger *zap.Lo
 	s.Os.Name = info.Platform
 	s.Os.Version = info.PlatformVersion
 	s.Os.Family = info.PlatformFamily
+	s.Os.Goos = runtime.GOOS
+	s.Os.Goarch = runtime.GOARCH
 
 	// Kernel
 	s.Kernel = &rpc.SystemMetadata_Kernel{}
@@ -85,4 +93,16 @@ func getPublicIpAddress() (string, error) {
 		return "", err
 	}
 	return alphaNumericExpr.FindString(string(bs)), nil
+}
+
+func getPrivateIpAddress() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	addr, ok := conn.LocalAddr().(*net.UDPAddr)
+	if !ok {
+		return "", fmt.Errorf("expected local address to be *net.UDPAddr, got %T", conn.LocalAddr())
+	}
+	return addr.IP.String(), nil
 }

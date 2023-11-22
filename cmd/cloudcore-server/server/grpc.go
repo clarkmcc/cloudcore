@@ -2,37 +2,49 @@ package server
 
 import (
 	"context"
+	"github.com/clarkmcc/brpc"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
+	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/services"
+	"github.com/clarkmcc/cloudcore/internal/example"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
+	"github.com/clarkmcc/cloudcore/internal/token"
+	"github.com/quic-go/quic-go"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"net"
 	"strconv"
 )
 
-func Listener(config *config.Config, logger *zap.Logger) (net.Listener, error) {
-	logger.Info("listening on port", zap.Int("port", config.AgentServer.Port))
-	return net.Listen("tcp", ":"+strconv.Itoa(config.AgentServer.Port))
-}
-
 func New(
 	lc fx.Lifecycle,
+	ctx context.Context,
+	config *config.Config,
 	logger *zap.Logger,
-	listener net.Listener,
-	auth *services.AuthService,
-	agent *services.AgentManagerService,
-) *grpc.Server {
-	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(loggingUnaryInterceptor(logger)),
-		grpc.StreamInterceptor(loggingStreamInterceptor(logger)))
-	rpc.RegisterAuthenticationServer(srv, auth)
-	rpc.RegisterAgentManagerServer(srv, agent)
+	signer *token.Signer,
+	db database.Database,
+) *brpc.Server[rpc.AgentClient] {
+	srv := brpc.NewServer(brpc.ServerConfig[rpc.AgentClient]{
+		// Create our gRPC server
+		Server: grpc.NewServer(
+			grpc.UnaryInterceptor(loggingUnaryInterceptor(logger)),
+			grpc.StreamInterceptor(loggingStreamInterceptor(logger))),
+		// Create a gRPC client service which allows for server->client RPCs
+		ClientServiceBuilder: func(cc grpc.ClientConnInterface) rpc.AgentClient {
+			return rpc.NewAgentClient(cc)
+		},
+	})
+	rpc.RegisterAuthenticationServer(srv, services.NewAuthService(config, signer, db))
+	rpc.RegisterAgentManagerServer(srv, services.NewAgentManagerService(ctx, config, logger, signer, db, srv))
+
 	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
+		OnStart: func(_ context.Context) error {
+			l, err := quic.ListenAddr(":"+strconv.Itoa(config.AgentServer.Port), example.TLSConfig(), nil)
+			if err != nil {
+				return err
+			}
 			go func() {
-				err := srv.Serve(listener)
+				err := srv.Serve(ctx, l)
 				if err != nil {
 					logger.Fatal("failed to serve", zap.Error(err))
 				}
@@ -40,7 +52,7 @@ func New(
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			srv.GracefulStop()
+			srv.Server.GracefulStop()
 			return nil
 		},
 	})
