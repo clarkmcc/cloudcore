@@ -7,7 +7,6 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import { Sidebar } from "@/components/sidebar.tsx";
-import { loadProject, ProjectHome } from "@/pages/project.tsx";
 import { withAuthenticationRequired } from "@auth0/auth0-react";
 import { useEnsureUser } from "@/hooks/user.ts";
 import { AuthenticatedApolloProvider } from "@/queries/client.tsx";
@@ -16,12 +15,13 @@ import { SettingsPage } from "@/pages/settings.tsx";
 import { HostsPage } from "@/pages/hosts.tsx";
 import { HostGroupsPage } from "@/pages/host-groups.tsx";
 import { HostDetails } from "@/pages/host-details.tsx";
+import { HomePage } from "@/pages/home.tsx";
 
 function Container() {
   useEnsureUser();
   return (
     <div className="flex flex-row h-full">
-      <Sidebar className="max-w-[200px]"/>
+      <Sidebar className="max-w-[200px]" />
       <div className="border-l w-full">
         <Outlet />
       </div>
@@ -43,7 +43,7 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<AuthenticatedContainer />}>
       <Route path="/projects/:projectId">
-        <Route index element={<ProjectHome />} loader={loadProject} />
+        <Route index element={<HomePage />} />
         <Route path="/projects/:projectId/hosts" element={<HostsPage />} />
         <Route
           path="/projects/:projectId/hosts/:hostId"
@@ -52,7 +52,6 @@ const router = createBrowserRouter(
         <Route
           path="/projects/:projectId/hosts/groups"
           element={<HostGroupsPage />}
-          loader={loadProject}
         />
         <Route
           path="/projects/:projectId/settings"

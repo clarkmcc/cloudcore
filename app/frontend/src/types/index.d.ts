@@ -30,3 +30,16 @@ export type AgentEvent = {
   type: AgentEventType;
   message: string;
 };
+
+export type ProjectMetrics = {
+  offlineHosts: number;
+  onlineHosts: number;
+  hostsByOsName: OsNameCount[];
+  totalAgents: number;
+  totalHosts: number;
+};
+
+export type OsNameCount = {
+  osName: string;
+  count: number;
+};

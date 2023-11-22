@@ -22,13 +22,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProjectId } from "@/hooks/navigation.ts";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge.tsx";
 import moment from "moment";
-import { AppleIcon } from "@/components/icons/apple-icon.tsx";
 import { getArchitecture, getOsName } from "@/lib/utils.ts";
 import { OsIcon } from "@/components/icons/os-icon.tsx";
 
@@ -90,7 +89,9 @@ export function HostsTable({ hosts }: HostsTableProps) {
                     osName={row.original.osName}
                     className="h-5 w-5 mr-2"
                   />
-                  <span className="font-medium">{getOsName(row.original.osName)}</span>
+                  <span className="font-medium">
+                    {getOsName(row.original.osName)}
+                  </span>
                 </>
               )}
             </div>
@@ -104,9 +105,9 @@ export function HostsTable({ hosts }: HostsTableProps) {
       {
         accessorKey: "kernelArchitecture",
         header: "Architecture",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return getArchitecture(row.original.kernelArchitecture);
-        }
+        },
       },
       {
         accessorKey: "status",
@@ -207,7 +208,7 @@ export function HostsTable({ hosts }: HostsTableProps) {
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                No hosts.
               </TableCell>
             </TableRow>
           )}

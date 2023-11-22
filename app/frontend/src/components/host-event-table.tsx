@@ -20,7 +20,7 @@ export function HostEventTable({ events }: HostEventTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[250px]">Timestamp</TableHead>
+          <TableHead className="w-[250px] hidden lg:block">Timestamp</TableHead>
           <TableHead className="w-[150px]">Type</TableHead>
           <TableHead>Message</TableHead>
         </TableRow>
@@ -28,7 +28,7 @@ export function HostEventTable({ events }: HostEventTableProps) {
       <TableBody>
         {events.map((event) => (
           <TableRow key={event.id}>
-            <TableCell className="font-medium">
+            <TableCell className="font-medium hidden lg:block">
               {moment(event.createdAt).format("llll")}
             </TableCell>
             <TableCell>

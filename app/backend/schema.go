@@ -11,8 +11,9 @@ var schemaConfig = graphql.SchemaConfig{
 	Query: graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query",
 		Fields: graphql.Fields{
-			"hosts": hostList,
-			"host":  hostDetails,
+			"hosts":          hostList,
+			"host":           hostDetails,
+			"projectMetrics": projectMetrics,
 		},
 	}),
 	Mutation: graphql.NewObject(graphql.ObjectConfig{

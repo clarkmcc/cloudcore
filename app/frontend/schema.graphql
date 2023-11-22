@@ -8,10 +8,10 @@ schema {
 type AgentEvent {
     agentId: String!
     createdAt: DateTime!
-    eventType: String!
     hostId: String!
     id: String!
     message: String!
+    type: String!
 }
 
 type Host {
@@ -51,6 +51,11 @@ type Mutation {
     projectCreate(description: String, name: String!): ProjectCreate
 }
 
+type OsNameCount {
+    count: Int!
+    osName: String!
+}
+
 type Project {
     created_at: DateTime
     id: String
@@ -64,9 +69,18 @@ type ProjectCreate {
     project: Project
 }
 
+type ProjectMetrics {
+    hostsByOsName: [OsNameCount]
+    offlineHosts: Int!
+    onlineHosts: Int!
+    totalAgents: Int!
+    totalHosts: Int!
+}
+
 type Query {
     host(hostId: String!, projectId: String!): Host
     hosts(projectId: String!): [Host]
+    projectMetrics(projectId: String!): ProjectMetrics
 }
 
 enum Status {

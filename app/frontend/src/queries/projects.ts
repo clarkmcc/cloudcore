@@ -14,3 +14,18 @@ export const MUTATION_CREATE_PROJECT = gql`
     }
   }
 `;
+
+export const QUERY_PROJECT_METRICS = gql`
+  query ProjectMetrics($projectId: String!) {
+    projectMetrics(projectId: $projectId) {
+      offlineHosts
+      onlineHosts
+      hostsByOsName {
+        osName
+        count
+      }
+      totalAgents
+      totalHosts
+    }
+  }
+`;

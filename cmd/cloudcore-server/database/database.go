@@ -57,6 +57,9 @@ type AppDatabase interface {
 
 	// GetEventLogsByHost returns the events logs for the host with the given host ID.
 	GetEventLogsByHost(ctx context.Context, hostId string, limit int) (out []types.AgentEventLog, err error)
+
+	// GetDashboardMetrics returns the dashboard metrics for the given project ID.
+	GetProjectMetrics(ctx context.Context, projectId string) (*types.ProjectMetrics, error)
 }
 
 func New(cfg *config.Config, logger *zap.Logger) (Database, error) {
