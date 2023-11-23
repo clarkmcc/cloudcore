@@ -4,6 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { ThemeProvider } from "@/components/theme-provider.tsx";
 import { Auth0Provider } from "@auth0/auth0-react";
+import { Toaster } from "@/components/ui/toaster.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     >
       <ThemeProvider defaultTheme="dark" storageKey="theme">
         <App />
+        <Toaster />
       </ThemeProvider>
     </Auth0Provider>
   </React.StrictMode>,

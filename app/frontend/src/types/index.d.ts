@@ -43,3 +43,16 @@ export type OsNameCount = {
   osName: string;
   count: number;
 };
+
+export type AgentPlatformDownload = {
+  goos: DisplayableValue<GOOS>;
+  goarch: DisplayableValue<GOARCH>[];
+};
+
+export type DisplayableValue<T> = {
+  display: string;
+  value: T;
+};
+
+export type GOOS = "windows" | "linux" | "darwin";
+export type GOARCH = "amd64" | "arm64";
