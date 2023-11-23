@@ -7,15 +7,15 @@ builds:
     env:
       - CGO_ENABLED=0
     goos:
-      - windows
+#      - windows
       - darwin
       - linux
     goarch:
-      - amd64
+#      - amd64
       - arm64
-      - arm
+#      - arm
     goarm:
-      - 6
+#      - 6
       - 7
     ignore:
       - goos: windows
@@ -28,3 +28,22 @@ builds:
       - goos: darwin
         goarch: arm
         goarm: 7
+nfpms:
+  - id: cloudcored-linux
+    package_name: cloudcored
+    builds:
+      - cloudcored
+    vendor: cloudcore
+    homepage: https://cloudcore.clarkmccauley.com/
+    maintainer: Clark McCauley
+    license: MIT
+    formats:
+      - deb
+# todo: Setup systemd service
+#    scripts:
+#      preinstall: scripts/linux/preinstall.sh
+#      postinstall: scripts/linux/postinstall.sh
+#      preremove: scripts/linux/preremove.sh
+#      postremove: scripts/linux/postremove.sh
+# Whether to enable the size reporting or not.
+report_sizes: true
