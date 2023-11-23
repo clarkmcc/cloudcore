@@ -1,11 +1,32 @@
 #!/bin/bash
 
+CAN_ROOT=''
+SUDO=''
+
+if [ "$(id -u)" = 0 ]; then
+        CAN_ROOT=1
+        SUDO=""
+    elif type sudo >/dev/null; then
+        CAN_ROOT=1
+        SUDO="sudo"
+    elif type doas >/dev/null; then
+        CAN_ROOT=1
+        SUDO="doas"
+fi
+
+if [ "$CAN_ROOT" != "1" ]; then
+        echo "could not obtain root or sudo access, aborting install. re-run this script as root or setup sudo"
+        return
+fi
+
 # Function to fetch the latest version number from GitHub
 get_latest_version() {
     curl -L -s \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
-    https://api.github.com/repos/clarkmcc/cloudcore/releases/latest | jq -r .tag_name
+    https://api.github.com/repos/clarkmcc/cloudcore/releases/latest | \
+    grep '"tag_name":' | \
+    cut -d '"' -f 4
 }
 
 # Function to determine OS
@@ -55,7 +76,7 @@ install_package() {
     echo "done"
 
     echo "Installing package"
-    sudo dpkg -i package.deb
+    $SUDO dpkg -i package.deb
     rm package.deb
 }
 
