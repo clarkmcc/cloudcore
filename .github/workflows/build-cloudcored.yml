@@ -24,6 +24,10 @@ jobs:
           go-version: stable
       # More assembly might be required: Docker logins, GPG, etc.
       # It all depends on your needs.
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+      - name: Code Generation
+        run: go generate ./...
       - uses: goreleaser/goreleaser-action@v5
         with:
           # either 'goreleaser' (default) or 'goreleaser-pro':
