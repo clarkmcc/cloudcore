@@ -6,9 +6,6 @@ import (
 	_ "embed"
 )
 
-// Requires mkcert to be installed (https://github.com/FiloSottile/mkcert).
-//go:generate mkcert example.com
-
 //go:embed example.com.pem
 var certificate []byte
 
