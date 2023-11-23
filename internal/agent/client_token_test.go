@@ -1,4 +1,4 @@
-package client
+package agent
 
 import (
 	"github.com/magiconair/properties/assert"

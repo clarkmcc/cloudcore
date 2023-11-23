@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/clarkmcc/cloudcore/internal/agentdb"
+	"github.com/clarkmcc/cloudcore/internal/agent"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/host"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"io"
 	"net"
@@ -21,14 +22,19 @@ var (
 	alphaNumericExpr = regexp.MustCompile("[a-zA-Z0-9.]+")
 )
 
-func BuildSystemMetadata(ctx context.Context, db agentdb.AgentDB, logger *zap.Logger) (*rpc.SystemMetadata, error) {
+type MetadataProvider struct {
+	db     agent.Database
+	logger *zap.Logger
+}
+
+func (p *MetadataProvider) GetSystemMetadata(ctx context.Context) (*rpc.SystemMetadata, error) {
 	s := &rpc.SystemMetadata{}
 
 	// Identifiers
 	s.Identifiers = &rpc.SystemMetadata_Identifiers{}
 	var err error
-	s.Identifiers.AgentIdentifier, err = db.AgentID(ctx)
-	if err != nil && !errors.Is(err, agentdb.ErrNoAgentID) {
+	s.Identifiers.AgentIdentifier, err = p.db.AgentID(ctx)
+	if err != nil && !errors.Is(err, agent.ErrNoAgentID) {
 		return nil, err
 	}
 	s.Identifiers.HostId, err = host.HostIDWithContext(ctx)
@@ -42,11 +48,11 @@ func BuildSystemMetadata(ctx context.Context, db agentdb.AgentDB, logger *zap.Lo
 	}
 	s.Identifiers.PublicIpAddress, err = getPublicIpAddress()
 	if err != nil {
-		logger.Warn("failed to get public ip address", zap.Error(err))
+		p.logger.Warn("failed to get public ip address", zap.Error(err))
 	}
 	s.Identifiers.PrivateIpAddress, err = getPrivateIpAddress()
 	if err != nil {
-		logger.Warn("failed to get private ip address", zap.Error(err))
+		p.logger.Warn("failed to get private ip address", zap.Error(err))
 	}
 
 	info, err := host.InfoWithContext(ctx)
@@ -81,13 +87,20 @@ func BuildSystemMetadata(ctx context.Context, db agentdb.AgentDB, logger *zap.Lo
 	return s, nil
 }
 
+func NewSystemMetadataProvider(db agent.Database, logger *zap.Logger) *MetadataProvider {
+	return &MetadataProvider{
+		logger: logger.Named("system-metadata"),
+		db:     db,
+	}
+}
+
 // getPublicIpAddress uses an AWS api to return the public IP address
 func getPublicIpAddress() (string, error) {
 	resp, err := http.Get("https://checkip.amazonaws.com/")
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer multierr.AppendFunc(&err, resp.Body.Close)
 	bs, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err

@@ -1,14 +1,13 @@
-package events
+package agent
 
 import (
 	"context"
-	"github.com/clarkmcc/cloudcore/internal/client"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-func NewLifecycleNotifications(lc fx.Lifecycle, client *client.Client, logger *zap.Logger) {
+func NewLifecycleNotifications(lc fx.Lifecycle, client *Client, logger *zap.Logger) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			return logError(logger, client.Notify(ctx, &rpc.ClientNotification{

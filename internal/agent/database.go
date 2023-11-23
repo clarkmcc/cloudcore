@@ -1,10 +1,9 @@
-package agentdb
+package agent
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
 )
 
 var (
@@ -14,7 +13,7 @@ var (
 	ErrNoAgentID         = errors.New("no agent id")
 )
 
-type AgentDB interface {
+type Database interface {
 	AuthToken(ctx context.Context) (*AuthToken, error)
 	SaveAuthToken(ctx context.Context, token *AuthToken) error
 
@@ -22,9 +21,9 @@ type AgentDB interface {
 	SaveAgentID(ctx context.Context, agentID string) error
 }
 
-func New(cfg *config.Config) (AgentDB, error) {
+func NewDatabase(cfg *Config) (Database, error) {
 	switch cfg.Database.Flavor {
-	case config.AgentDatabaseFlavorMemory:
+	case databaseFlavorMemory:
 		return newMemoryDB()
 	default:
 		return nil, fmt.Errorf("unknown database flavor: %s", cfg.Database.Flavor)

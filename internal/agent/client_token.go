@@ -20,16 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package client
+package agent
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
-	"github.com/clarkmcc/cloudcore/internal/agentdb"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
-	"github.com/clarkmcc/cloudcore/internal/sysinfo"
 	"github.com/clarkmcc/cloudcore/internal/token"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -37,12 +34,17 @@ import (
 	"time"
 )
 
+type SystemMetadataProvider interface {
+	GetSystemMetadata(ctx context.Context) (*rpc.SystemMetadata, error)
+}
+
 // tokenManager manages the lifecycle of the JWT-based authentication tokens
 // that are used to authenticate the agent with the server.
 type tokenManager struct {
-	logger *zap.Logger
-	config *config.Config
-	db     agentdb.AgentDB
+	logger           *zap.Logger
+	config           *Config
+	db               Database
+	metadataProvider SystemMetadataProvider
 
 	client *Client
 }
@@ -53,7 +55,7 @@ type tokenManager struct {
 // client and an active gRPC connection in order to acquire a new token.
 func (m *tokenManager) getAuthTokenLocked(ctx context.Context) (string, error) {
 	tk, err := m.db.AuthToken(ctx)
-	if err != nil && !errors.Is(err, agentdb.ErrAuthTokenNotFound) {
+	if err != nil && !errors.Is(err, ErrAuthTokenNotFound) {
 		return "", err
 	}
 	if tk != nil && !isExpired(tk.Expiration) && !isExpiringSoon(time.Now(), tk.Expiration, tk.Duration) {
@@ -70,7 +72,7 @@ func (m *tokenManager) getAuthTokenLocked(ctx context.Context) (string, error) {
 	return tk.Token, nil
 }
 
-func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *agentdb.AuthToken) (*agentdb.AuthToken, error) {
+func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *AuthToken) (*AuthToken, error) {
 	// Dynamically construct the authentication request based on the type
 	// of flow we're performing.
 	var req rpc.AuthenticateRequest
@@ -92,7 +94,7 @@ func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *agentdb.Aut
 	}
 
 	var err error
-	req.SystemMetadata, err = sysinfo.BuildSystemMetadata(ctx, m.db, m.logger)
+	req.SystemMetadata, err = m.metadataProvider.GetSystemMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -123,19 +125,20 @@ func (m *tokenManager) newToken(ctx context.Context, maybeAuthToken *agentdb.Aut
 		return nil, err
 	}
 	m.logger.Debug("successfully obtained auth token", zap.Time("exp", exp), zap.String("dur", exp.Sub(time.Now()).String()))
-	return &agentdb.AuthToken{
+	return &AuthToken{
 		Token:      res.Token,
 		Expiration: exp,
 		Duration:   exp.Sub(time.Now()),
 	}, nil
 }
 
-func newTokenManager(config *config.Config, db agentdb.AgentDB, logger *zap.Logger, client *Client) *tokenManager {
+func newTokenManager(config *Config, db Database, logger *zap.Logger, client *Client, metadataProvider SystemMetadataProvider) *tokenManager {
 	return &tokenManager{
-		logger: logger.Named("token-manager"),
-		config: config,
-		client: client,
-		db:     db,
+		metadataProvider: metadataProvider,
+		logger:           logger.Named("token-manager"),
+		config:           config,
+		client:           client,
+		db:               db,
 	}
 }
 

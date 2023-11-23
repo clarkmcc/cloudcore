@@ -2,12 +2,9 @@ package main
 
 import (
 	"context"
-	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
 	"github.com/clarkmcc/cloudcore/internal/agent"
-	"github.com/clarkmcc/cloudcore/internal/agentdb"
-	"github.com/clarkmcc/cloudcore/internal/client"
-	"github.com/clarkmcc/cloudcore/internal/events"
 	"github.com/clarkmcc/cloudcore/internal/logger"
+	"github.com/clarkmcc/cloudcore/internal/sysinfo"
 	"github.com/clarkmcc/cloudcore/internal/tasks"
 	_ "github.com/clarkmcc/cloudcore/internal/tasks/registered"
 	"github.com/spf13/cobra"
@@ -22,30 +19,30 @@ var cmd = &cobra.Command{
 	Use: "cloudcored",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		app := fx.New(
-			fx.Provide(func() *cobra.Command {
-				return cmd
-			}),
+			fx.Provide(literal(cmd)),
+			fx.Provide(agent.NewConfig),
+			fx.Provide(agent.NewDatabase),
+			fx.Provide(agent.NewServer),
+			fx.Provide(agent.NewClient),
+			fx.Provide(tasks.NewExecutor),
+			fx.Provide(fx.Annotate(
+				sysinfo.NewSystemMetadataProvider,
+				fx.As(new(agent.SystemMetadataProvider)))),
+			fx.Invoke(agent.NewLifecycleNotifications),
 			fx.Provide(func() (*tomb.Tomb, context.Context) {
 				tomb := tomb.Tomb{}
 				ctx, _ := signal.NotifyContext(tomb.Context(context.Background()), os.Interrupt)
 				return &tomb, ctx
 			}),
-			fx.Provide(config.New),
-			// Extra the logging config from the Agent-specific config
-			fx.Provide(func(config *config.Config) *config.Logging {
+			fx.Decorate(func(config *agent.Config) *agent.Logging {
 				return &config.Logging
 			}),
-			fx.Provide(func(config *config.Config) *zap.Logger {
+			fx.Provide(func(config *agent.Config) *zap.Logger {
 				return logger.New(config.Logging.Level, config.Logging.Debug)
 			}),
-			fx.Provide(agentdb.New),
-			fx.Provide(agent.NewServer),
-			fx.Provide(client.New),
-			fx.Provide(tasks.NewExecutor),
 			fx.Invoke(func(e *tasks.Executor) {
 				e.Initialize()
 			}),
-			fx.Invoke(events.NewLifecycleNotifications),
 			fx.Invoke(func(s fx.Shutdowner, tomb *tomb.Tomb) error {
 				<-tomb.Dead()
 				return s.Shutdown(fx.ExitCode(0))
@@ -68,5 +65,15 @@ func init() {
 func main() {
 	if err := cmd.Execute(); err != nil {
 		panic(err)
+	}
+}
+
+// literal returns a fx provider function that returns the value
+// passed to this function. It is a utility that avoids having
+// to write a full anonymous inline function just to literal a
+// type to fx.
+func literal[T any](v T) func() T {
+	return func() T {
+		return v
 	}
 }

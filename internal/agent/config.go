@@ -1,8 +1,7 @@
-package config
+package agent
 
 import (
-	"encoding/json"
-	"fmt"
+	"github.com/clarkmcc/cloudcore/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -12,13 +11,13 @@ func init() {
 	viper.SetDefault("server.endpoint", "127.0.0.1:10000")
 	viper.SetDefault("logging.level", "info")
 	viper.SetDefault("logging.debug", true)
-	viper.SetDefault("database.flavor", AgentDatabaseFlavorMemory)
+	viper.SetDefault("database.flavor", databaseFlavorMemory)
 }
 
-type AgentDatabaseFlavor string
+type databaseFlavor string
 
 const (
-	AgentDatabaseFlavorMemory AgentDatabaseFlavor = "memory"
+	databaseFlavorMemory databaseFlavor = "memory"
 )
 
 type Config struct {
@@ -29,7 +28,7 @@ type Config struct {
 }
 
 type database struct {
-	Flavor AgentDatabaseFlavor
+	Flavor databaseFlavor
 }
 
 type server struct {
@@ -41,7 +40,7 @@ type Logging struct {
 	Debug bool   `json:"debug"`
 }
 
-func New(cmd *cobra.Command) (*Config, error) {
+func NewConfig(cmd *cobra.Command) (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	if cwd, err := os.Getwd(); err == nil {
@@ -62,11 +61,6 @@ func New(cmd *cobra.Command) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	printStructure(cfg)
+	utils.PrintStruct(cfg)
 	return &cfg, nil
-}
-
-func printStructure(v any) {
-	b, _ := json.MarshalIndent(v, "", "  ")
-	fmt.Println(string(b))
 }

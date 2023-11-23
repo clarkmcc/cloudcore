@@ -20,15 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package client
+package agent
 
 import (
 	"context"
 	"crypto/tls"
 	"errors"
 	"github.com/clarkmcc/brpc"
-	"github.com/clarkmcc/cloudcore/cmd/cloudcored/config"
-	"github.com/clarkmcc/cloudcore/internal/agentdb"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -200,7 +198,15 @@ func (c *Client) setupClientsLocked(ctx context.Context) (err error) {
 	return nil
 }
 
-func New(config *config.Config, tomb *tomb.Tomb, cmd *cobra.Command, db agentdb.AgentDB, logger *zap.Logger, service rpc.AgentServer) *Client {
+func NewClient(
+	config *Config,
+	tomb *tomb.Tomb,
+	cmd *cobra.Command,
+	db Database,
+	logger *zap.Logger,
+	service rpc.AgentServer,
+	metadataProvider SystemMetadataProvider,
+) *Client {
 	c := &Client{
 		tomb:    tomb,
 		service: service,
@@ -211,6 +217,6 @@ func New(config *config.Config, tomb *tomb.Tomb, cmd *cobra.Command, db agentdb.
 			})
 		},
 	}
-	c.tokenManager = newTokenManager(config, db, logger, c)
+	c.tokenManager = newTokenManager(config, db, logger, c, metadataProvider)
 	return c
 }

@@ -1,11 +1,11 @@
-package agentdb
+package agent
 
 import (
 	"context"
 	"time"
 )
 
-var _ AgentDB = (*memoryDB)(nil)
+var _ Database = (*memoryDB)(nil)
 
 type AuthToken struct {
 	Token      string
