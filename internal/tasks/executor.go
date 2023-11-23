@@ -46,7 +46,7 @@ func (e *Executor) maybeSchedule(task *Task) {
 		e.logger.Debug("task not scheduled to run again", zap.String("task", task.Name))
 		return
 	}
-	e.logger.Debug("scheduling task", zap.String("task", task.Name), zap.Time("next", n), zap.String("in", n.Sub(time.Now()).String()))
+	e.logger.Info("scheduling task", zap.String("task", task.Name), zap.Time("next", n), zap.String("in", n.Sub(time.Now()).String()))
 	e.schedule(task, n)
 }
 
