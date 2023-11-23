@@ -1,0 +1,30 @@
+builds:
+  - id: cloudcored
+    main: ./cmd/cloudcored
+    binary: cloudcored
+    ldflags:
+      - -s -w -X github.com/clarkmcc/cloudcore/pkg/version.Version={{.Version}} -X github.com/clarkmcc/cloudcore/pkg/version.Hash={{.Commit}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - 6
+      - 7
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: arm
+      - goos: darwin
+        goarch: arm
+        goarm: 6
+      - goos: darwin
+        goarch: arm
+        goarm: 7
