@@ -12,6 +12,15 @@ builds:
       - linux_amd64
       - linux_arm64
       - linux_arm_5
+  - id: cloudcore-server
+    main: ./cmd/cloudcore-server
+    binary: cloudcore
+    ldflags:
+      - -s -w -X github.com/clarkmcc/cloudcore/pkg/version.Version={{.Version}} -X github.com/clarkmcc/cloudcore/pkg/version.Hash={{.Commit}}
+    env:
+      - CGO_ENABLED=0
+    targets:
+      - linux_amd64
 nfpms:
   - id: cloudcored-linux
     package_name: cloudcored
@@ -30,4 +39,14 @@ nfpms:
 #      preremove: scripts/linux/preremove.sh
 #      postremove: scripts/linux/postremove.sh
 # Whether to enable the size reporting or not.
+
+dockers:
+  # Server
+  - id: cloudcore-server
+    goos: linux
+    goarch: amd64
+    ids:
+      - cloudcore-server
+    dockerfile: ./cmd/cloudcore-server/Dockerfile
+
 report_sizes: true
