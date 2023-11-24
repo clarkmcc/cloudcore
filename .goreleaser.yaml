@@ -34,6 +34,8 @@ nfpms:
 dockers:
   # Server
   - id: cloudcore-server
+    image_templates:
+      - clarkmcc/cloudcore
     goos: linux
     goarch: amd64
     dockerfile: ./cmd/cloudcore-server/Dockerfile
