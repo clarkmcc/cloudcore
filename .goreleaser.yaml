@@ -12,6 +12,19 @@ builds:
       - linux_amd64
       - linux_arm64
       - linux_arm_5
+  - id: cloudcore-server
+    main: ./cmd/cloudcore-server
+    binary: cloudcore
+    ldflags:
+      - -s -w -X github.com/clarkmcc/cloudcore/pkg/version.Version={{.Version}} -X github.com/clarkmcc/cloudcore/pkg/version.Hash={{.Commit}}
+    env:
+      - CGO_ENABLED=0
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - linux_arm_5
 nfpms:
   - id: cloudcored-linux
     package_name: cloudcored
@@ -36,6 +49,8 @@ dockers:
   - id: cloudcore-server
     image_templates:
       - clarkmcc/cloudcore
+    ids:
+      - cloudcore-server
     goos: linux
     goarch: amd64
     dockerfile: ./cmd/cloudcore-server/Dockerfile
