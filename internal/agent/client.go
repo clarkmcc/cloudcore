@@ -40,13 +40,15 @@ import (
 	"gopkg.in/tomb.v2"
 	"io"
 	"sync"
+	"time"
 )
 
 type Client struct {
-	dialer  func(ctx context.Context) (*brpc.ClientConn, error)
-	service rpc.AgentServer
-	logger  *zap.Logger
-	tomb    *tomb.Tomb
+	dialer   func(ctx context.Context) (*brpc.ClientConn, error)
+	service  rpc.AgentServer
+	logger   *zap.Logger
+	tomb     *tomb.Tomb
+	shutdown <-chan struct{}
 
 	tokenManager *tokenManager
 
@@ -165,7 +167,7 @@ func (c *Client) connectStreamsLocked(ctx context.Context) (err error) {
 			return nil
 		}
 	}
-	c.notify, err = c.agent.Notifications(ctx)
+	c.notify, err = c.agent.Notifications(c.shutdownCtx(ctx))
 	if err != nil {
 		return err
 	}
@@ -173,6 +175,7 @@ func (c *Client) connectStreamsLocked(ctx context.Context) (err error) {
 }
 
 func (c *Client) setupClientsLocked(ctx context.Context) (err error) {
+	ctx = c.shutdownCtx(ctx)
 	c.conn, err = c.dialer(ctx)
 	if err != nil {
 		return err
@@ -181,7 +184,7 @@ func (c *Client) setupClientsLocked(ctx context.Context) (err error) {
 	c.agent = rpc.NewAgentManagerClient(c.conn)
 
 	c.tomb.Go(func() error {
-		err = brpc.ServeClientService[rpc.AgentServer](c.tomb.Dying(), c.conn, func(registrar grpc.ServiceRegistrar) {
+		err = brpc.ServeClientService[rpc.AgentServer](ctx.Done(), c.conn, func(registrar grpc.ServiceRegistrar) {
 			rpc.RegisterAgentServer(registrar, c.service)
 		})
 		if err != nil {
@@ -198,7 +201,33 @@ func (c *Client) setupClientsLocked(ctx context.Context) (err error) {
 	return nil
 }
 
+// shutdownCtx returns a special context that cancels once the tomb is fully
+// dead. The idea here is that the client should be the last thing to shut
+// down because some shutdown procedures need a working client in order to
+// work (such as sending shutdown notifications).
+//
+// If the provided context dies, we wait for 5 seconds for the tomb to fully
+// die before cancelling the return context. The idea is we:
+//  1. Don't want to block forever if the provided context is cancelled but
+//     the tomb doesn't die.
+//  2. Don't want to cancel the returned context at the same time we get the
+//     shutdown signal.
+func (c *Client) shutdownCtx(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-c.shutdown:
+		}
+		time.Sleep(5 * time.Second)
+		c.logger.Error("shutting down client context")
+		cancel()
+	}()
+	return ctx
+}
+
 func NewClient(
+	ctx context.Context,
 	config *Config,
 	tomb *tomb.Tomb,
 	cmd *cobra.Command,
@@ -208,9 +237,10 @@ func NewClient(
 	metadataProvider SystemMetadataProvider,
 ) *Client {
 	c := &Client{
-		tomb:    tomb,
-		service: service,
-		logger:  logger.Named("client"),
+		tomb:     tomb,
+		service:  service,
+		shutdown: ctx.Done(),
+		logger:   logger.Named("client"),
 		dialer: func(ctx context.Context) (*brpc.ClientConn, error) {
 			return brpc.DialContext(ctx, config.Server.Endpoint, &tls.Config{
 				InsecureSkipVerify: cast.ToBool(cmd.Flag("insecure-skip-verify").Value.String()),

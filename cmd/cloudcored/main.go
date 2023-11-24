@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/clarkmcc/cloudcore/internal/agent"
 	"github.com/clarkmcc/cloudcore/internal/logger"
 	"github.com/clarkmcc/cloudcore/internal/sysinfo"
@@ -9,17 +8,19 @@ import (
 	_ "github.com/clarkmcc/cloudcore/internal/tasks/registered"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
+	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
 	"gopkg.in/tomb.v2"
-	"os"
-	"os/signal"
 )
 
 var cmd = &cobra.Command{
 	Use: "cloudcored",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		t := tomb.Tomb{}
 		app := fx.New(
 			fx.Provide(literal(cmd)),
+			fx.Provide(signaller(&t)),
+			fx.Invoke(shutdowner),
 			fx.Provide(agent.NewConfig),
 			fx.Provide(agent.NewDatabase),
 			fx.Provide(agent.NewServer),
@@ -29,23 +30,17 @@ var cmd = &cobra.Command{
 				sysinfo.NewSystemMetadataProvider,
 				fx.As(new(agent.SystemMetadataProvider)))),
 			fx.Invoke(agent.NewLifecycleNotifications),
-			fx.Provide(func() (*tomb.Tomb, context.Context) {
-				tomb := tomb.Tomb{}
-				ctx, _ := signal.NotifyContext(tomb.Context(context.Background()), os.Interrupt)
-				return &tomb, ctx
-			}),
 			fx.Decorate(func(config *agent.Config) *agent.Logging {
 				return &config.Logging
 			}),
 			fx.Provide(func(config *agent.Config) *zap.Logger {
 				return logger.New(config.Logging.Level, config.Logging.Debug)
 			}),
+			fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
+				return &fxevent.ZapLogger{Logger: logger.Named("fx")}
+			}),
 			fx.Invoke(func(e *tasks.Executor) {
 				e.Initialize()
-			}),
-			fx.Invoke(func(s fx.Shutdowner, tomb *tomb.Tomb) error {
-				<-tomb.Dead()
-				return s.Shutdown(fx.ExitCode(0))
 			}),
 		)
 		err := app.Err()
@@ -53,6 +48,7 @@ var cmd = &cobra.Command{
 			return err
 		}
 		app.Run()
+		<-t.Dead()
 		return nil
 	},
 }
