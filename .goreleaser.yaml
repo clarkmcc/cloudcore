@@ -30,7 +30,8 @@ nfpms:
     package_name: cloudcored
     builds:
       - cloudcored
-    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}_{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}"
+    file_name_template: >- 
+      {{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}_{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     vendor: cloudcore
     homepage: https://cloudcore.clarkmccauley.com/
     maintainer: Clark McCauley
