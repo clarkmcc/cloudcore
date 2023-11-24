@@ -48,7 +48,7 @@ dockers:
   # Server
   - id: cloudcore-server
     image_templates:
-      - clarkmcc/cloudcore
+      - ghcr.io/clarkmcc/cloudcore
     ids:
       - cloudcore-server
     goos: linux

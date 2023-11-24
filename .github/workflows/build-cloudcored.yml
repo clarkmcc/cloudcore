@@ -1,4 +1,4 @@
-name: Release cloudcored
+name: Release
 
 on:
   push:
@@ -8,11 +8,12 @@ on:
 
 permissions:
   contents: write
-  # packages: write
-  # issues: write
+  packages: write
+  issues: write
 
 jobs:
-  goreleaser:
+  release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
