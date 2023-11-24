@@ -7,6 +7,8 @@ builds:
     env:
       - CGO_ENABLED=0
     targets:
+      - windows_amd64
+      - windows_arm64
       - darwin_amd64
       - darwin_arm64
       - linux_amd64
@@ -20,6 +22,8 @@ builds:
     env:
       - CGO_ENABLED=0
     targets:
+      - windows_amd64
+      - windows_arm64
       - darwin_amd64
       - darwin_arm64
       - linux_amd64
@@ -38,6 +42,8 @@ nfpms:
     license: MIT
     formats:
       - deb
+      - apk
+      - rpm
     scripts:
       preinstall: scripts/linux/preinstall.sh
 # todo: Setup systemd service
@@ -56,5 +62,14 @@ dockers:
     goos: linux
     goarch: amd64
     dockerfile: ./cmd/cloudcore-server/Dockerfile
+
+archives:
+  - id: cloudcored-archive
+    builds:
+      - cloudcored
+    wrap_in_directory: false
+    name_template: >- 
+      {{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}_{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
+    format: binary
 
 report_sizes: true
