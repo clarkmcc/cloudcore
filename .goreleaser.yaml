@@ -3,7 +3,7 @@ builds:
     main: ./cmd/cloudcored
     binary: cloudcored
     ldflags:
-      - -s -w -X github.com/clarkmcc/cloudcore/pkg/version.Version={{.Version}} -X github.com/clarkmcc/cloudcore/pkg/version.Hash={{.Commit}}
+      - -s -w -X github.com/clarkmcc/cloudcore/pkg/version.Version={{.Version}} -X github.com/clarkmcc/cloudcore/pkg/version.Hash={{.Commit}} -X github.com/clarkmcc/cloudcore/pkg/version.GOARM={{.Env.GOARM}}
     env:
       - CGO_ENABLED=0
     targets:
@@ -38,6 +38,7 @@ nfpms:
       - deb
     scripts:
       preinstall: scripts/linux/preinstall.sh
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}_{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}"
 # todo: Setup systemd service
 #      postinstall: scripts/linux/postinstall.sh
 #      preremove: scripts/linux/preremove.sh
