@@ -47,15 +47,15 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 	}
 
 	// Check for any PSK groups
-	var groups []types.AgentGroup
+	var groups []types.HostGroup
 	err = tx.SelectContext(ctx, &groups, `
-		SELECT g.* FROM agent_group g
-		INNER JOIN agent_group_psk gp ON g.id = gp.agent_group_id AND gp.status = 'active'
+		SELECT g.* FROM host_group g
+		INNER JOIN host_group_psk gp ON g.id = gp.host_group_id AND gp.status = 'active'
 		INNER JOIN agent_psk p ON gp.agent_psk_id = p.id AND p.status = 'active'
 		WHERE p.id = $1 AND g.status = 'active';
 	`, psk.ID)
 	if err != nil {
-		return "", fmt.Errorf("finding agent groups: %w", err)
+		return "", fmt.Errorf("finding host groups: %w", err)
 	}
 
 	// First, we upsert the host on the identifier field
@@ -122,15 +122,15 @@ func (d *Database) AuthenticateAgent(ctx context.Context, key string, metadata *
 	// Add the agent to the groups
 	for _, g := range groups {
 		_, err = tx.NamedExecContext(ctx, `
-			INSERT INTO agent_group_member (project_id, agent_id, agent_group_id)
-			VALUES (:project_id, :agent_id, :agent_group_id);
+			INSERT INTO host_group_member (project_id, host_id, host_group_id)
+			VALUES (:project_id, :host_id, :host_group_id);
 		`, map[string]any{
-			"project_id":     psk.ProjectID,
-			"agent_id":       agentID,
-			"agent_group_id": g.ID,
+			"project_id":    psk.ProjectID,
+			"host_id":       hostID,
+			"host_group_id": g.ID,
 		})
 		if err != nil {
-			return "", fmt.Errorf("adding agent to group %s (%s): %w", g.Name, g.ID, err)
+			return "", fmt.Errorf("adding host to group %s (%s): %w", g.Name, g.ID, err)
 		}
 	}
 	return agentID, tx.Commit()

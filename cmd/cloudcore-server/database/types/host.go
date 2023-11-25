@@ -26,3 +26,13 @@ type Host struct {
 	CPUModel               sql.NullString `db:"cpu_model" json:"cpuModel"`
 	CPUCores               sql.NullInt64  `db:"cpu_cores" json:"cpuCores"`
 }
+
+type HostGroup struct {
+	ID          string         `db:"id"`
+	CreatedAt   time.Time      `db:"created_at"`
+	UpdatedAt   time.Time      `db:"updated_at"`
+	Status      Status         `db:"status"`
+	ProjectID   string         `db:"project_id"`
+	Name        string         `db:"name"`
+	Description sql.NullString `db:"description"`
+}

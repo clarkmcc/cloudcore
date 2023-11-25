@@ -36,3 +36,10 @@ func (d *Database) GetHost(ctx context.Context, hostId, projectId string) (out t
 func (d *Database) GetEventLogsByHost(ctx context.Context, hostId string, limit int) (out []types.AgentEventLog, err error) {
 	return out, d.db.SelectContext(ctx, &out, `SELECT * FROM agent_event WHERE host_id = $1 ORDER BY created_at DESC LIMIT $2`, hostId, limit)
 }
+
+func (d *Database) CreateHostGroup(ctx context.Context, projectId, name, description string) (string, error) {
+	var id string
+	err := d.db.GetContext(ctx, &id, `INSERT INTO host_group (project_id, name, description) VALUES ($1, $2, $3) RETURNING id`,
+		projectId, name, description)
+	return id, err
+}

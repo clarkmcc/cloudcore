@@ -91,6 +91,39 @@ CREATE TABLE IF NOT EXISTS "host" (
     UNIQUE INDEX "identifier_idx" ("identifier")
 );
 
+-- A group of hosts that can be targeted for reasons
+CREATE TABLE IF NOT EXISTS "host_group" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "status" STATUS NOT NULL DEFAULT 'active',
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "project_id" UUID NOT NULL,
+
+    "name" STRING NOT NULL,
+    "description" STRING,
+
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE
+);
+
+-- Associates a host with a host group
+CREATE TABLE IF NOT EXISTS "host_group_member" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "status" STATUS NOT NULL DEFAULT 'active',
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "project_id" UUID NOT NULL,
+
+    "host_id" UUID NOT NULL,
+    "host_group_id" UUID NOT NULL,
+
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
+    FOREIGN KEY ("host_id") REFERENCES "host" ("id") ON DELETE CASCADE,
+    FOREIGN KEY ("host_group_id") REFERENCES "host_group" ("id") ON DELETE CASCADE,
+    UNIQUE INDEX "host_id_host_group_id_idx" ("host_id", "host_group_id")
+);
+
 -- Agent is the cloudcore agent that runs on a host. An agent only reports
 -- on a single host, but over the lifetime of a host, there may be multiple
 -- agents that report on it.
@@ -135,6 +168,25 @@ CREATE TABLE IF NOT EXISTS "agent_psk" (
     UNIQUE INDEX "key_idx" ("key")
 );
 
+-- Associates a pre-shared key with an agent group. When an agent registers
+-- using a PSK, then we should automatically add it to the agent group.
+CREATE TABLE IF NOT EXISTS "host_group_psk" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "status" STATUS NOT NULL DEFAULT 'active',
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "project_id" UUID NOT NULL,
+
+    "host_group_id" UUID NOT NULL,
+    "agent_psk_id" UUID NOT NULL,
+
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
+    FOREIGN KEY ("host_group_id") REFERENCES "host_group" ("id") ON DELETE CASCADE,
+    FOREIGN KEY ("agent_psk_id") REFERENCES "agent_psk" ("id") ON DELETE CASCADE,
+    UNIQUE INDEX "host_group_id_agent_psk_id_idx" ("host_group_id", "agent_psk_id")
+);
+
 CREATE TYPE IF NOT EXISTS "agent_event_type" AS ENUM ('AGENT_STARTUP', 'AGENT_SHUTDOWN');
 
 CREATE TABLE IF NOT EXISTS "agent_event" (
@@ -150,58 +202,6 @@ CREATE TABLE IF NOT EXISTS "agent_event" (
     FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
     FOREIGN KEY ("host_id") REFERENCES "host" ("id") ON DELETE CASCADE,
     FOREIGN KEY ("agent_id") REFERENCES "agent" ("id") ON DELETE CASCADE
-);
-
--- A group of agents that can be targeted for reasons
-CREATE TABLE IF NOT EXISTS "agent_group" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "project_id" UUID NOT NULL,
-
-    "name" STRING NOT NULL,
-    "description" STRING,
-
-    PRIMARY KEY ("id"),
-    FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE
-);
-
--- Associates an agent with an agent group
-CREATE TABLE IF NOT EXISTS "agent_group_member" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "project_id" UUID NOT NULL,
-
-    "agent_id" UUID NOT NULL,
-    "agent_group_id" UUID NOT NULL,
-
-    PRIMARY KEY ("id"),
-    FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
-    FOREIGN KEY ("agent_id") REFERENCES "agent" ("id") ON DELETE CASCADE,
-    FOREIGN KEY ("agent_group_id") REFERENCES "agent_group" ("id") ON DELETE CASCADE,
-    UNIQUE INDEX "agent_id_agent_group_id_idx" ("agent_id", "agent_group_id")
-);
-
--- Associates a pre-shared key with an agent group. When an agent registers
--- using a PSK, then we should automatically add it to the agent group.
-CREATE TABLE IF NOT EXISTS "agent_group_psk" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "status" STATUS NOT NULL DEFAULT 'active',
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "project_id" UUID NOT NULL,
-
-    "agent_group_id" UUID NOT NULL,
-    "agent_psk_id" UUID NOT NULL,
-
-    PRIMARY KEY ("id"),
-    FOREIGN KEY ("project_id") REFERENCES "project" ("id") ON DELETE CASCADE,
-    FOREIGN KEY ("agent_group_id") REFERENCES "agent_group" ("id") ON DELETE CASCADE,
-    FOREIGN KEY ("agent_psk_id") REFERENCES "agent_psk" ("id") ON DELETE CASCADE,
-    UNIQUE INDEX "agent_group_id_agent_psk_id_idx" ("agent_group_id", "agent_psk_id")
 );
 
 -- Create the default data

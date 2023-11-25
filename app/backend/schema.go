@@ -23,6 +23,7 @@ var schemaConfig = graphql.SchemaConfig{
 			"ensureUser":              ensureUser,
 			"projectCreate":           projectCreate,
 			"buildDeployAgentCommand": buildDeployAgentCommand,
+			"hostGroupCreate":         newHostGroup,
 		},
 	}),
 }

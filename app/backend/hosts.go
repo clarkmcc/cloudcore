@@ -146,3 +146,28 @@ var hostDetails = &graphql.Field{
 		return rctx.db.GetHost(rctx, rctx.getStringArg("hostId"), projectID)
 	}),
 }
+
+var newHostGroup = &graphql.Field{
+	Type: graphql.String,
+	Args: graphql.FieldConfigArgument{
+		"projectId": &graphql.ArgumentConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"name": &graphql.ArgumentConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+		"description": &graphql.ArgumentConfig{
+			Type: graphql.NewNonNull(graphql.String),
+		},
+	},
+	Resolve: wrapper[any](func(rctx resolveContext[any]) (string, error) {
+		projectID := rctx.getStringArg("projectId")
+		err := rctx.canAccessProject(projectID)
+		if err != nil {
+			return "", err
+		}
+		return rctx.db.CreateHostGroup(rctx, projectID,
+			rctx.getStringArg("name"),
+			rctx.getStringArg("description"))
+	}),
+}

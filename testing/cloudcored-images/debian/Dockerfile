@@ -18,4 +18,4 @@ RUN apt-get update && apt-get install -y ca-certificates
 COPY --from=builder /root/cloudcored /tmp/cloudcored
 COPY --from=builder /root/cmd/cloudcored/config.yaml /config.yaml
 
-CMD ["/tmp/cloudcored", "--psk", "00000000-0000-0000-0000-000000000000"]
+CMD ["/tmp/cloudcored", "--insecure-skip-verify", "--psk", "00000000-0000-0000-0000-000000000000"]

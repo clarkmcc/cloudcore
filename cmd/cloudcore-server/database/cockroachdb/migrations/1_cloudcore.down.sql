@@ -1,8 +1,8 @@
 DROP TABLE IF EXISTS "global_state";
 DROP TABLE IF EXISTS "agent_event";
-DROP TABLE IF EXISTS "agent_group_psk";
-DROP TABLE IF EXISTS "agent_group_member";
-DROP TABLE IF EXISTS "agent_group";
+DROP TABLE IF EXISTS "host_group_psk";
+DROP TABLE IF EXISTS "host_group_member";
+DROP TABLE IF EXISTS "host_group";
 DROP TABLE IF EXISTS "agent_psk";
 DROP TABLE IF EXISTS "agent";
 DROP TABLE IF EXISTS "host";

@@ -64,6 +64,10 @@ type AppDatabase interface {
 
 	// GeneratePreSharedKey generates a new pre-shared key for the given project ID.
 	GeneratePreSharedKey(ctx context.Context, projectId string, exp time.Time) (string, error)
+
+	// CreateHostGroup creates a new host group with the given project ID, name, and description.
+	// Host groups allow hosts to be logically grouped together for other operations.
+	CreateHostGroup(ctx context.Context, projectId, name, description string) (string, error)
 }
 
 func New(cfg *config.Config, logger *zap.Logger) (Database, error) {
