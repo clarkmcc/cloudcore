@@ -64,7 +64,7 @@ install_package() {
     # Determine the package name, extension, and installer command based on OS and architecture
     if [ "$os" = "debian" ]; then
         package_extension=".deb"
-        installer_command="$SUDO dpkg -i"
+        installer_command="${SUDO} dpkg -i"
         case $arch in
             x86_64) package_name="cloudcored_${version}_linux_amd64${package_extension}" ;;
             aarch64) package_name="cloudcored_${version}_linux_arm64${package_extension}" ;;
@@ -72,7 +72,7 @@ install_package() {
         esac
     elif [ "$os" = "rhel" ] && [ "$arch" = "aarch64" ]; then
         package_extension=".rpm"
-        installer_command="$SUDO rpm -i"
+        installer_command="${SUDO} rpm -i"
         package_name="cloudcored_${version}_linux_aarch64${package_extension}"
     else
         echo "Unsupported OS or architecture: $os, $arch"
