@@ -1,6 +1,9 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"github.com/clarkmcc/cloudcore/pkg/packages"
+	"github.com/spf13/viper"
+)
 
 func init() {
 	viper.MustBindEnv("agentServer.port", "AGENT_SERVER_PORT")
@@ -9,6 +12,11 @@ func init() {
 	viper.MustBindEnv("auth0.audience", "AUTH0_AUDIENCE")
 	viper.SetDefault("agentServer.port", 10000)
 	viper.SetDefault("appServer.port", 10001)
+
+	viper.SetDefault("packageManagement.provider", GithubReleaseProvider)
+	viper.SetDefault("packageManagement.githubRelease.owner", "clarkmcc")
+	viper.SetDefault("packageManagement.githubRelease.repo", "cloudcore")
+
 	_ = viper.BindEnv("logging.level", "LOGGING_LEVEL")
 	_ = viper.BindEnv("logging.debug", "LOGGING_DEBUG")
 	viper.MustBindEnv("auth.signingSecret", "AUTH_TOKEN_SIGNING_SECRET")
@@ -18,12 +26,13 @@ func init() {
 }
 
 type Config struct {
-	AgentServer AgentServer    `json:"agentServer"`
-	AppServer   AppServer      `json:"appServer"`
-	Logging     Logging        `json:"logging"`
-	Auth        serverAuth     `json:"auth"`
-	Auth0       Auth0          `json:"auth0"`
-	Database    serverDatabase `json:"database"`
+	AgentServer       AgentServer             `json:"agentServer"`
+	AppServer         AppServer               `json:"appServer"`
+	Logging           Logging                 `json:"logging"`
+	Auth              serverAuth              `json:"auth"`
+	Auth0             Auth0                   `json:"auth0"`
+	Database          serverDatabase          `json:"database"`
+	PackageManagement PackageManagementConfig `json:"packageManagement"`
 }
 
 type serverAuth struct {
@@ -59,6 +68,17 @@ type AppServer struct {
 type Auth0 struct {
 	Domain   string `json:"domain"`
 	Audience string `json:"audience"`
+}
+
+type PackageManagementProvider string
+
+const (
+	GithubReleaseProvider PackageManagementProvider = "github-release"
+)
+
+type PackageManagementConfig struct {
+	Provider      PackageManagementProvider            `json:"provider"`
+	GithubRelease packages.GithubReleaseProviderConfig `json:"githubRelease,omitempty"`
 }
 
 func New() (*Config, error) {

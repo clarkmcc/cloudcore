@@ -6,6 +6,7 @@ import (
 	"github.com/clarkmcc/cloudcore/app/backend/middleware"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
+	"github.com/clarkmcc/cloudcore/pkg/packages"
 	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/graphql"
 	"go.uber.org/fx"
@@ -19,9 +20,10 @@ type Server struct {
 	schema   graphql.Schema
 	logger   *zap.Logger
 	database database.Database
+	packages packages.Provider
 }
 
-func New(lc fx.Lifecycle, config *config.Config, database database.Database, logger *zap.Logger) (*Server, error) {
+func New(lc fx.Lifecycle, config *config.Config, database database.Database, logger *zap.Logger, packages packages.Provider) (*Server, error) {
 	logger = logger.Named("app-backend")
 	s, err := graphql.NewSchema(schemaConfig)
 	if err != nil {
@@ -31,6 +33,7 @@ func New(lc fx.Lifecycle, config *config.Config, database database.Database, log
 		schema:   s,
 		logger:   logger,
 		database: database,
+		packages: packages,
 	}
 
 	r := gin.Default()

@@ -56,3 +56,10 @@ export type DisplayableValue<T> = {
 
 export type GOOS = "windows" | "linux" | "darwin";
 export type GOARCH = "amd64" | "arm64";
+export type GOARM = "5" | "6" | "7";
+
+export type Package = {
+  goos: GOOS;
+  goarch: GOARCH;
+  goarm: GOARM;
+};

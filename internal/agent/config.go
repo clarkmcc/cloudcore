@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/clarkmcc/cloudcore/pkg/utils"
@@ -103,16 +104,18 @@ func getPskFromFile(_ string) ([]byte, error) {
 	switch runtime.GOOS {
 	case "linux":
 		filename = "/etc/cloudcored/psk"
-	case "darwin":
+	default:
 		dir, err := os.UserHomeDir()
 		if err != nil {
 			return nil, fmt.Errorf("getting home dir: %w", err)
 		}
 		filename = filepath.Join(dir, ".cloudcored", "psk")
-	default:
-		return nil, fmt.Errorf("reading psk from file not supported on %s", runtime.GOOS)
 	}
-	return os.ReadFile(filename)
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.TrimSuffix(b, []byte("\n")), nil
 }
 
 func writePskToFile(psk string) error {
@@ -120,14 +123,12 @@ func writePskToFile(psk string) error {
 	switch runtime.GOOS {
 	case "linux":
 		filename = "/etc/cloudcored/psk"
-	case "darwin":
+	default:
 		dir, err := os.UserHomeDir()
 		if err != nil {
 			return fmt.Errorf("getting home dir: %w", err)
 		}
 		filename = filepath.Join(dir, ".cloudcored", "psk")
-	default:
-		return fmt.Errorf("saving psk to file not supported on %s", runtime.GOOS)
 	}
 	err := os.MkdirAll(filepath.Dir(filename), 0600)
 	if err != nil {

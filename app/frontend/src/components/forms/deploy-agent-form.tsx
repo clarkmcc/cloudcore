@@ -14,26 +14,31 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.tsx";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button.tsx";
 import { cn, goosToIcon } from "@/lib/utils.ts";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { AgentPlatformDownload, DisplayableValue, GOARCH } from "@/types";
 import { Switch } from "@/components/ui/switch.tsx";
 
-const FormSchema = z.object({
-  os: z.enum(["linux", "windows", "darwin"], {
+export const DeployAgentFormSchema = z.object({
+  goos: z.enum(["linux", "windows", "darwin"], {
     required_error: "Please select an operating system",
   }),
-  arch: z.enum(["amd64", "arm64", "386"]),
-  generate_psk: z.boolean(),
+  goarch: z.enum(["amd64", "arm64", "386", "arm"]),
+  generatePsk: z.boolean().default(false),
 });
 
-type DeployAgentFormProps = {
+export type DeployAgentFormProps = {
   downloads: AgentPlatformDownload[];
-  onSubmit: (values: z.infer<typeof FormSchema>) => void;
+  onSubmit: (values: z.infer<typeof DeployAgentFormSchema>) => void;
+  loading?: boolean;
 };
 
-export function DeployAgentForm({ onSubmit, downloads }: DeployAgentFormProps) {
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+export function DeployAgentForm({
+  onSubmit,
+  downloads,
+  loading,
+}: DeployAgentFormProps) {
+  const form = useForm<z.infer<typeof DeployAgentFormSchema>>({
+    resolver: zodResolver(DeployAgentFormSchema),
   });
 
   const getArchs = useCallback(
@@ -45,8 +50,8 @@ export function DeployAgentForm({ onSubmit, downloads }: DeployAgentFormProps) {
     [downloads],
   );
 
-  const os = form.watch("os");
-  const arch = form.watch("arch");
+  const os = form.watch("goos");
+  const arch = form.watch("goarch");
 
   // Watch the os and arch and make sure that when the OS changes, the arch that
   // is selected is compatible with the OS. If it is not, then select the first
@@ -56,23 +61,26 @@ export function DeployAgentForm({ onSubmit, downloads }: DeployAgentFormProps) {
     const selectedIncompatibleArch =
       arches.find((a) => a.value === arch) === undefined;
     if (arches.length > 0 && selectedIncompatibleArch) {
-      form.setValue("arch", arches[0].value);
+      form.setValue("goarch", arches[0].value);
     }
   }, [os, arch]);
+
+  const availableOses = useMemo(() => downloads.length, [downloads]);
+  const availableArches = useMemo(() => getArchs(os).length, [os]);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="os"
+          name="goos"
           render={({ field }) => (
             <FormItem>
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className={`grid grid-cols-${downloads.length} gap-4`}
+                  className={`grid grid-cols-${availableOses} gap-4`}
                 >
                   {downloads.map((download) => (
                     <OsOption
@@ -92,18 +100,18 @@ export function DeployAgentForm({ onSubmit, downloads }: DeployAgentFormProps) {
         {os && (
           <FormField
             control={form.control}
-            name="arch"
+            name="goarch"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    className={`grid grid-cols-${getArchs(os).length} gap-4`}
+                    className={`grid grid-cols-${availableArches} gap-4`}
                   >
                     {getArchs(os).map((download) => (
                       <ArchOption
-                        key={download.value}
+                        // key={download.value}
                         arch={download.value}
                         label={download.display}
                         field={field}
@@ -119,7 +127,7 @@ export function DeployAgentForm({ onSubmit, downloads }: DeployAgentFormProps) {
 
         <FormField
           control={form.control}
-          name="generate_psk"
+          name="generatePsk"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
@@ -141,7 +149,9 @@ export function DeployAgentForm({ onSubmit, downloads }: DeployAgentFormProps) {
         />
 
         <div className="flex flex-row-reverse space-x-2">
-          <Button type="submit">Next</Button>
+          <Button disabled={loading} type="submit">
+            Next
+          </Button>
         </div>
       </form>
     </Form>
@@ -152,14 +162,14 @@ type OsOptionProps = {
   os: string;
   icon: React.ElementType;
   label: string;
-  field: ControllerRenderProps<z.infer<typeof FormSchema>, "os">;
+  field: ControllerRenderProps<z.infer<typeof DeployAgentFormSchema>, "goos">;
   className?: string;
 };
 
 function OsOption(props: OsOptionProps) {
   const Icon = props.icon;
   return (
-    <FormItem className={props.className}>
+    <FormItem className={cn("col-span-1", props.className)}>
       <FormControl>
         <RadioGroupItem className="sr-only" value={props.os} />
       </FormControl>
@@ -184,13 +194,13 @@ type ArchOptionProps = {
   arch: string;
   // icon: React.ElementType;
   label: string;
-  field: ControllerRenderProps<z.infer<typeof FormSchema>, "arch">;
+  field: ControllerRenderProps<z.infer<typeof DeployAgentFormSchema>, "goarch">;
   className?: string;
 };
 
 function ArchOption(props: ArchOptionProps) {
   return (
-    <FormItem className={props.className}>
+    <FormItem className={cn("col-span-1", props.className)}>
       <FormControl>
         <RadioGroupItem className="sr-only" value={props.arch} />
       </FormControl>

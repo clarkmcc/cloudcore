@@ -16,9 +16,11 @@ import (
 
 var Version = "x.y.z"
 var Hash = "aabbccdd"
+var GOARM = ""
 
 type Info struct {
 	GoVersion string `json:"go"`
+	GOARM     string `json:"goarm,omitempty"`
 	Compiler  string `json:"compiler"`
 	Platform  string `json:"platform"`
 	Version   string `json:"version"`
@@ -31,6 +33,7 @@ func Get() Info {
 	return Info{
 		GoVersion: runtime.Version(),
 		Compiler:  runtime.Compiler,
+		GOARM:     GOARM,
 		Platform:  fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
 		Version:   Version,
 		Hash:      Hash,

@@ -47,6 +47,7 @@ type Host {
 }
 
 type Mutation {
+    buildDeployAgentCommand(generatePsk: Boolean!, goarch: String!, goos: String!, projectId: String!): String!
     ensureUser: [Project]
     projectCreate(description: String, name: String!): ProjectCreate
 }
@@ -54,6 +55,13 @@ type Mutation {
 type OsNameCount {
     count: Int!
     osName: String!
+}
+
+type Package {
+    goarch: String!
+    goarm: String
+    goos: String!
+    version: String!
 }
 
 type Project {
@@ -80,6 +88,7 @@ type ProjectMetrics {
 type Query {
     host(hostId: String!, projectId: String!): Host
     hosts(projectId: String!): [Host]
+    packages: [Package]
     projectMetrics(projectId: String!): ProjectMetrics
 }
 

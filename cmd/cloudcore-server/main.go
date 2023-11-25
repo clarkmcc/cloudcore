@@ -10,6 +10,7 @@ import (
 	"github.com/clarkmcc/cloudcore/internal/logger"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/clarkmcc/cloudcore/internal/token"
+	"github.com/clarkmcc/cloudcore/pkg/packages"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
@@ -23,10 +24,14 @@ func main() {
 			return signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 		}),
 		fx.Provide(config.New),
+		fx.Provide(componentConfigs),
 		fx.Provide(token.NewSigner),
 		fx.Provide(database.New),
 		fx.Provide(appbackend.New),
 		fx.Provide(server.New),
+		fx.Provide(fx.Annotate(
+			packages.NewGithubReleaseProvider,
+			fx.As(new(packages.Provider)))),
 		fx.Provide(func(config *config.Config) *zap.Logger {
 			return logger.New(config.Logging.Level, config.Logging.Debug)
 		}),

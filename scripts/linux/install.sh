@@ -1,122 +1,101 @@
 #!/bin/bash
 
-CAN_ROOT=''
-SUDO=''
+set -eu
 
-if [ "$(id -u)" = 0 ]; then
-        CAN_ROOT=1
-        SUDO=""
-    elif type sudo >/dev/null; then
-        CAN_ROOT=1
-        SUDO="sudo"
-    elif type doas >/dev/null; then
-        CAN_ROOT=1
-        SUDO="doas"
-fi
-
-if [ "$CAN_ROOT" != "1" ]; then
-        echo "could not obtain root or sudo access, aborting install. re-run this script as root or setup sudo"
-        return
-fi
-
-# Function to fetch the latest version number from GitHub
-get_latest_version() {
-    curl -L -s \
-    -H "Accept: application/vnd.github+json" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    https://api.github.com/repos/clarkmcc/cloudcore/releases/latest | \
-    grep '"tag_name":' | \
-    cut -d '"' -f 4
+# Function definitions
+log() {
+    echo "$@" >&2
 }
 
-# Function to determine OS
-get_os() {
-    if [ -f /etc/debian_version ]; then
-        echo "debian"
-    elif [ -f /etc/alpine-release ]; then
-        echo "alpine"
-    elif [ -f /etc/arch-release ]; then
-        echo "arch"
-    elif [ -f /etc/redhat-release ]; then
-        echo "rhel"
-    else
-        echo "unsupported"
-    fi
+error() {
+    log "ERROR: $@"
+    exit 1
 }
 
-# Function to determine architecture using lscpu
-get_architecture() {
-    lscpu | grep Architecture | cut -d ':' -f 2 | sed 's/ //g'
-}
+detect_os_and_arch() {
+    OS=""
+    ARCH=$(uname -m)
+    PACKAGE_TYPE=""
 
-# Function to download and install the package
-install_package() {
-    local version=$1
-    local os=$2
-    local arch=$3
-    local base_url="https://github.com/clarkmcc/cloudcore/releases/download/${version}"
-    local package_name=""
-    local installer_command=""
-    local package_extension=""
-
-    echo "Installing version $version for $os on $arch architecture"
-
-    # Determine the package name, extension, and installer command based on OS and architecture
-    if [ "$os" = "debian" ]; then
-        package_extension=".deb"
-        installer_command="${SUDO} dpkg -i"
-        case $arch in
-            x86_64) package_name="cloudcored_${version}_linux_amd64${package_extension}" ;;
-            aarch64) package_name="cloudcored_${version}_linux_arm64${package_extension}" ;;
-            armv7l) package_name="cloudcored_${version}_linux_arm5${package_extension}" ;;
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        case "$ID" in
+            debian|ubuntu|linuxmint)
+                OS="debian"
+                PACKAGE_TYPE="deb"
+                ;;
+            centos|fedora|rhel|rocky|almalinux)
+                OS="rhel"
+                PACKAGE_TYPE="rpm"
+                ;;
+            alpine)
+                OS="alpine"
+                PACKAGE_TYPE="apk"
+                ;;
+            *)
+                OS="unsupported"
+                ;;
         esac
-    elif [ "$os" = "rhel" ] && [ "$arch" = "aarch64" ]; then
-        package_extension=".rpm"
-        installer_command="${SUDO} rpm -i"
-        package_name="cloudcored_${version}_linux_aarch64${package_extension}"
-    else
-        echo "Unsupported OS or architecture: $os, $arch"
-        return
     fi
 
-    # Construct the download URL
-    local url="${base_url}/${package_name}"
+    case "$ARCH" in
+        x86_64) ARCH="amd64" ;;
+        aarch64) ARCH="arm64" ;;
+        armv7l) ARCH="arm5" ;;
+        *) ARCH="unsupported" ;;
+    esac
 
-    # Download and install the package
-    if [ -n "$package_name" ]; then
-        echo -n "Fetching $url: "
-        curl -L -o "$package_name" "$url"
-        echo "done"
-        echo "Installing package"
-        $installer_command "$package_name"
-        rm "$package_name"
+    if [ -z "$OS" ] || [ "$ARCH" = "unsupported" ]; then
+        error "Unsupported OS or architecture: $OS, $ARCH"
     fi
 }
 
-# Main installation process
-version=$(get_latest_version)
-os=$(get_os)
-arch=$(get_architecture)
+fetch_latest_version_and_construct_package_url() {
+    VERSION=$(curl -L -s -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    https://api.github.com/repos/clarkmcc/cloudcore/releases/latest | \
+                    grep '"tag_name":' | cut -d '"' -f 4)
+    PACKAGE_URL="https://github.com/clarkmcc/cloudcore/releases/download/${VERSION}/cloudcored_${VERSION}_linux_${ARCH}.${PACKAGE_TYPE}"
+}
 
-# Parse command-line arguments for the --psk parameter
-while [ $# -gt 0 ]; do
-    case "$1" in
-        --psk)
-            CLOUDCORE_PSK="$2"
-            shift 2
+check_root_privileges() {
+    if [ "$(id -u)" -eq 0 ]; then
+        SUDO=""
+    elif type sudo >/dev/null 2>&1; then
+        SUDO="sudo"
+    else
+        error "Root privileges required. Please run this script as root or install sudo."
+    fi
+}
+
+install_package() {
+    log "Installing CloudCore version $VERSION for $OS on $ARCH architecture"
+    curl -L -o cloudcore_package "${PACKAGE_URL}"
+
+    case "$PACKAGE_TYPE" in
+        deb)
+            $SUDO dpkg -i cloudcore_package
+            ;;
+        rpm)
+            $SUDO rpm -i cloudcore_package
+            ;;
+        apk)
+            $SUDO apk add --allow-untrusted cloudcore_package
             ;;
         *)
-            break
+            error "Installation method not supported for package type: $PACKAGE_TYPE"
             ;;
     esac
-done
+    rm cloudcore_package
+}
 
+main() {
+    detect_os_and_arch
+    fetch_latest_version_and_construct_package_url
+    check_root_privileges
+    install_package
+    log "CloudCore installation complete!"
+}
 
-if [ "$os" = "unsupported" ] || [ "$arch" = "unsupported" ]; then
-    echo "Error: Unsupported OS or architecture."
-    exit 1
-fi
-
-export CLOUDCORE_PSK
-install_package "$version" "$os" "$arch"
-unset CLOUDCORE_PSK
+# Execute main function
+main

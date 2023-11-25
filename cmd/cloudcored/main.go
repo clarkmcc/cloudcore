@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/clarkmcc/cloudcore/cmd/cloudcored/commands"
 	"github.com/clarkmcc/cloudcore/internal/agent"
 	"github.com/clarkmcc/cloudcore/internal/logger"
 	"github.com/clarkmcc/cloudcore/internal/sysinfo"
@@ -56,6 +57,7 @@ var cmd = &cobra.Command{
 func init() {
 	cmd.PersistentFlags().String("psk", "", "Pre-shared key for authenticating with the server")
 	cmd.PersistentFlags().Bool("insecure-skip-verify", false, "Whether to skip verifying the server's TLS certificate")
+	cmd.AddCommand(commands.Version)
 }
 
 func main() {

@@ -9,7 +9,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import UsageBar from "react-usage-bar";
 import { useMemo } from "react";
-import { getOsName } from "@/lib/utils.ts";
+import { osToColorClasses, osToString } from "@/lib/utils.ts";
 import { useTheme } from "@/components/theme-provider.tsx";
 
 type ProjectMetricsCardsProps = {
@@ -25,7 +25,9 @@ export function ProjectMetricsCards({
   const hostsByOsNames = useMemo(
     () =>
       (metrics?.hostsByOsName ?? []).map((v) => ({
-        name: getOsName(v.osName),
+        name: osToString(v.osName),
+        className: osToColorClasses(v.osName),
+        dotClassName: osToColorClasses(v.osName),
         value: v.count,
       })),
     [metrics],
@@ -68,17 +70,21 @@ export function ProjectMetricsCards({
                 {
                   name: "Online",
                   value: metrics?.onlineHosts ?? 0,
-                  color: "#10B981",
+                  className: "bg-green-500 dark:bg-green-500",
+                  dotClassName: "bg-green-500 dark:bg-green-500",
                 },
                 {
                   name: "Offline",
                   value: metrics?.offlineHosts ?? 0,
-                  color: "#EF4444",
+                  className: "bg-red-500 dark:bg-red-500",
+                  dotClassName: "bg-red-500 dark:bg-red-500",
                 },
               ]}
-              total={2}
+              total={metrics?.totalHosts ?? 0}
               showPercentage
               compactLayout
+              usageBarContainerClassName="p-0"
+              usageBarClassName="m-w-full"
               darkMode={theme === "dark"}
             />
           )}
@@ -96,7 +102,7 @@ export function ProjectMetricsCards({
           ) : (
             <UsageBar
               items={hostsByOsNames}
-              total={2}
+              total={metrics?.totalHosts ?? 0}
               showPercentage
               compactLayout
               darkMode={theme === "dark"}

@@ -14,13 +14,15 @@ var schemaConfig = graphql.SchemaConfig{
 			"hosts":          hostList,
 			"host":           hostDetails,
 			"projectMetrics": projectMetrics,
+			"packages":       listPackages,
 		},
 	}),
 	Mutation: graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"ensureUser":    ensureUser,
-			"projectCreate": projectCreate,
+			"ensureUser":              ensureUser,
+			"projectCreate":           projectCreate,
+			"buildDeployAgentCommand": buildDeployAgentCommand,
 		},
 	}),
 }

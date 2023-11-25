@@ -5,38 +5,38 @@ import (
 	"fmt"
 	"github.com/clarkmcc/cloudcore/app/backend/middleware"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
+	"github.com/clarkmcc/cloudcore/pkg/packages"
 	"github.com/graphql-go/graphql"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 )
 
-const contextKeyLogger = "logger"
-const contextKeyDatabase = "database"
+type contextKeyLogger struct{}
+type contextKeyDatabase struct{}
+type contextKeyPackages struct{}
 
 func (s *Server) graphqlContext(ctx context.Context) context.Context {
-	ctx = context.WithValue(ctx, contextKeyLogger, s.logger)
-	ctx = context.WithValue(ctx, contextKeyDatabase, s.database)
+	ctx = context.WithValue(ctx, contextKeyLogger{}, s.logger)
+	ctx = context.WithValue(ctx, contextKeyDatabase{}, s.database)
+	ctx = context.WithValue(ctx, contextKeyPackages{}, s.packages)
 	return ctx
-}
-
-func logger(ctx context.Context) *zap.Logger {
-	return ctx.Value(contextKeyLogger).(*zap.Logger)
-}
-
-func db(ctx context.Context) database.Database {
-	return ctx.Value(contextKeyDatabase).(database.Database)
 }
 
 type resolveContext[S any] struct {
 	context.Context
-	db     database.Database
-	params graphql.ResolveParams
-	logger *zap.Logger
-	source S
+	db       database.Database
+	params   graphql.ResolveParams
+	logger   *zap.Logger
+	packages packages.Provider
+	source   S
 }
 
 func (r *resolveContext[S]) getStringArg(name string) string {
 	return cast.ToString(r.params.Args[name])
+}
+
+func (r *resolveContext[S]) getBoolArg(name string) bool {
+	return cast.ToBool(r.params.Args[name])
 }
 
 func (r *resolveContext[S]) canAccessProject(projectId string) error {
@@ -65,11 +65,12 @@ func wrapper[S any, T any](fn resolverFunc[T, S]) func(params graphql.ResolvePar
 			return nil, fmt.Errorf("invalid source type: %T, expected %T", params.Source, s)
 		}
 		return fn(resolveContext[S]{
-			Context: ctx,
-			db:      db(ctx),
-			logger:  logger(ctx),
-			source:  source,
-			params:  params,
+			Context:  ctx,
+			db:       ctx.Value(contextKeyDatabase{}).(database.Database),
+			packages: ctx.Value(contextKeyPackages{}).(packages.Provider),
+			logger:   ctx.Value(contextKeyLogger{}).(*zap.Logger),
+			source:   source,
+			params:   params,
 		})
 	}
 }

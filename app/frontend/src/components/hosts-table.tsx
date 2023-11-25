@@ -28,7 +28,7 @@ import { useProjectId } from "@/hooks/navigation.ts";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge.tsx";
 import moment from "moment";
-import { getArchitecture, getOsName } from "@/lib/utils.ts";
+import { goarchToString, goosToString, osToString } from "@/lib/utils.ts";
 import { OsIcon } from "@/components/icons/os-icon.tsx";
 
 type HostWithGroups = Host & {
@@ -90,7 +90,7 @@ export function HostsTable({ hosts }: HostsTableProps) {
                     className="h-5 w-5 mr-2"
                   />
                   <span className="font-medium">
-                    {getOsName(row.original.osName)}
+                    {osToString(row.original.osName)}
                   </span>
                 </>
               )}
@@ -106,7 +106,7 @@ export function HostsTable({ hosts }: HostsTableProps) {
         accessorKey: "kernelArchitecture",
         header: "Architecture",
         cell: ({ row }) => {
-          return getArchitecture(row.original.kernelArchitecture);
+          return goarchToString(row.original.kernelArchitecture);
         },
       },
       {
