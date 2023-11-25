@@ -1,7 +1,7 @@
 # cloudcore
 A cloud-based, open source IoT device management solution.
 
-![](assets/img.png)
+https://github.com/clarkmcc/cloudcore/assets/6639685/ff3b7468-37d4-4e91-aea9-75191e89e804
 
 ## Goals
 * Simple minimal agent and management interface.
