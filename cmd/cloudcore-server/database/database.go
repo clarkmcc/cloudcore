@@ -8,6 +8,7 @@ import (
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database/types"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"go.uber.org/zap"
+	"time"
 )
 
 type Database interface {
@@ -62,7 +63,7 @@ type AppDatabase interface {
 	GetProjectMetrics(ctx context.Context, projectId string) (*types.ProjectMetrics, error)
 
 	// GeneratePreSharedKey generates a new pre-shared key for the given project ID.
-	GeneratePreSharedKey(ctx context.Context, projectId string) (string, error)
+	GeneratePreSharedKey(ctx context.Context, projectId string, exp time.Time) (string, error)
 }
 
 func New(cfg *config.Config, logger *zap.Logger) (Database, error) {

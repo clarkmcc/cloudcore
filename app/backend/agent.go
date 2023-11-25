@@ -3,6 +3,11 @@ package appbackend
 import (
 	"fmt"
 	"github.com/graphql-go/graphql"
+	"time"
+)
+
+var (
+	defaultPskExpiration = 24 * time.Hour
 )
 
 var packageType = graphql.NewObject(graphql.ObjectConfig{
@@ -42,7 +47,7 @@ var buildDeployAgentCommand = &graphql.Field{
 		// Optionally generate a pre-shared key for the agent to use
 		var psk string
 		if rctx.getBoolArg("generatePsk") {
-			psk, err = rctx.db.GeneratePreSharedKey(rctx, projectId)
+			psk, err = rctx.db.GeneratePreSharedKey(rctx, projectId, time.Now().Add(defaultPskExpiration))
 			if err != nil {
 				return "", fmt.Errorf("generating psk: %w", err)
 			}

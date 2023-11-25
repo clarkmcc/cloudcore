@@ -75,14 +75,12 @@ export const DeployAnAgentButton = forwardRef<HTMLButtonElement, ButtonProps>(
             {command && (
               <>
                 <CommandCopy command={command} />
-                <div className="flex flex-row-reverse space-x-2">
-                  <div>
-                    <Button onClick={handleDone}>Done</Button>
-                  </div>
-                  <div>
-                    <Button variant="secondary" onClick={reset}>
+                <div className="flex flex-row-reverse ">
+                  <div className="space-x-2">
+                    <Button variant="ghost" onClick={reset}>
                       Deploy another agent
                     </Button>
+                    <Button onClick={handleDone}>Done</Button>
                   </div>
                 </div>
               </>

@@ -14,21 +14,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table.tsx";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { MoreHorizontal, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProjectId } from "@/hooks/navigation.ts";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge.tsx";
 import moment from "moment";
-import { goarchToString, goosToString, osToString } from "@/lib/utils.ts";
+import { goarchToString, osToString } from "@/lib/utils.ts";
 import { OsIcon } from "@/components/icons/os-icon.tsx";
 
 type HostWithGroups = Host & {
@@ -106,7 +97,7 @@ export function HostsTable({ hosts }: HostsTableProps) {
         accessorKey: "kernelArchitecture",
         header: "Architecture",
         cell: ({ row }) => {
-          return goarchToString(row.original.kernelArchitecture);
+          return goarchToString(row.original.kernelArchitecture ?? "");
         },
       },
       {
@@ -116,14 +107,14 @@ export function HostsTable({ hosts }: HostsTableProps) {
           switch (row.original.online) {
             case true:
               return (
-                <Badge className="text-xs" variant="ghost">
+                <Badge className="text-xs" variant="secondary">
                   <div className="rounded-xl bg-green-500 w-3 h-3 mr-2 inline-block"></div>
                   Online
                 </Badge>
               );
             case false:
               return (
-                <Badge className="text-xs" variant="ghost">
+                <Badge className="text-xs" variant="secondary">
                   <div className="rounded-xl bg-gray-500 w-3 h-3 mr-2 inline-block"></div>
                   Offline
                 </Badge>
@@ -138,27 +129,27 @@ export function HostsTable({ hosts }: HostsTableProps) {
           return moment(row.original.lastHeartbeatTimestamp).fromNow();
         },
       },
-      {
-        id: "actions",
-        cell: () => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem>Delete</DropdownMenuItem>
-                <DropdownMenuItem>Disable</DropdownMenuItem>
-                {/*<DropdownMenuSeparator />*/}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        },
-      },
+      // {
+      //   id: "actions",
+      //   cell: () => {
+      //     return (
+      //       <DropdownMenu>
+      //         <DropdownMenuTrigger asChild>
+      //           <Button variant="ghost" className="h-8 w-8 p-0">
+      //             <span className="sr-only">Open menu</span>
+      //             <MoreHorizontal className="h-4 w-4" />
+      //           </Button>
+      //         </DropdownMenuTrigger>
+      //         <DropdownMenuContent align="end">
+      //           <DropdownMenuLabel>Actions</DropdownMenuLabel>
+      //           <DropdownMenuItem>Delete</DropdownMenuItem>
+      //           <DropdownMenuItem>Disable</DropdownMenuItem>
+      //           {/*<DropdownMenuSeparator />*/}
+      //         </DropdownMenuContent>
+      //       </DropdownMenu>
+      //     );
+      //   },
+      // },
     ],
     [projectId],
   );

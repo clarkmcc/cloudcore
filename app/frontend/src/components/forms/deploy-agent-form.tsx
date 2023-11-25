@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.tsx";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button.tsx";
 import { cn, goosToIcon } from "@/lib/utils.ts";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect } from "react";
 import { AgentPlatformDownload, DisplayableValue, GOARCH } from "@/types";
 import { Switch } from "@/components/ui/switch.tsx";
 
@@ -65,9 +65,6 @@ export function DeployAgentForm({
     }
   }, [os, arch]);
 
-  const availableOses = useMemo(() => downloads.length, [downloads]);
-  const availableArches = useMemo(() => getArchs(os).length, [os]);
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -80,7 +77,7 @@ export function DeployAgentForm({
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className={`grid grid-cols-${availableOses} gap-4`}
+                  className={`grid grid-flow-col auto-cols-max" gap-4`}
                 >
                   {downloads.map((download) => (
                     <OsOption
@@ -107,7 +104,7 @@ export function DeployAgentForm({
                   <RadioGroup
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    className={`grid grid-cols-${availableArches} gap-4`}
+                    className={`grid grid-flow-col auto-cols-max" gap-4`}
                   >
                     {getArchs(os).map((download) => (
                       <ArchOption

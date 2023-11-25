@@ -208,9 +208,9 @@ func (d *Database) addAgentEvent(tx *sqlx.Tx, agentID string, event types.AgentE
 	return nil
 }
 
-func (d *Database) GeneratePreSharedKey(ctx context.Context, projectId string) (key string, err error) {
-	return key, d.db.GetContext(ctx, &key, `INSERT INTO agent_psk (project_id, name, description) VALUES ($1, $2, $3) RETURNING key`,
-		projectId, "Deploy Agent", "Generated during 'deploy new agent' process")
+func (d *Database) GeneratePreSharedKey(ctx context.Context, projectId string, exp time.Time) (key string, err error) {
+	return key, d.db.GetContext(ctx, &key, `INSERT INTO agent_psk (project_id, name, description, expiration) VALUES ($1, $2, $3, $4) RETURNING key`,
+		projectId, "Deploy Agent", "Generated during 'deploy new agent' process", exp)
 }
 
 func handleRollback(err *error, tx *sqlx.Tx) {
