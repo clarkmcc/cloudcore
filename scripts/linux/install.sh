@@ -55,35 +55,43 @@ install_package() {
     local os=$2
     local arch=$3
     local base_url="https://github.com/clarkmcc/cloudcore/releases/download/${version}"
-    local url=""
+    local package_name=""
+    local installer_command=""
 
     echo "Installing version $version for $os on $arch architecture"
 
-    # 64-bit Debian
-    if [ "$os" = "debian" ] && [ "$arch" = "x86_64" ]; then
-        url="${base_url}/cloudcored_${version}_linux_amd64.deb"
-    # 64-bit ARM Debian
-    elif [ "$os" = "debian" ] && [ "$arch" = "aarch64" ]; then
-        url="${base_url}/cloudcored_${version}_linux_arm64.deb"
-    # 64-bit RHEL/CentOS
+    # Determine the package name and installer command based on OS and architecture
+    if [ "$os" = "debian" ]; then
+        if [ "$arch" = "x86_64" ]; then
+            package_name="cloudcored_${version}_linux_amd64.deb"
+            installer_command="sudo dpkg -i"
+        elif [ "$arch" = "aarch64" ]; then
+            package_name="cloudcored_${version}_linux_arm64.deb"
+            installer_command="sudo dpkg -i"
+        elif [ "$arch" = "armv7l" ]; then
+            package_name="cloudcored_${version}_linux_arm5.deb"
+            installer_command="sudo dpkg -i"
+        fi
     elif [ "$os" = "rhel" ] && [ "$arch" = "aarch64" ]; then
-        url="${base_url}/cloudcored_${version}_linux_arm64.deb"
-    # ARM5 Debian
-    elif [ "$os" = "debian" ] && [ "$arch" = "armv7l" ]; then
-        url="${base_url}/cloudcored_${version}_linux_arm5.deb"
-    # Add more cases for different OS and architecture combinations
+        package_name="cloudcored_${version}_linux_aarch64.rpm"
+        installer_command="sudo rpm -i"
     else
         echo "Unsupported OS or architecture: $os, $arch"
         return
     fi
 
-    echo -n "Fetching $url: "
-    curl -L -o package.deb "$url"
-    echo "done"
+    # Construct the download URL
+    local url="${base_url}/${package_name}"
 
-    echo "Installing package"
-    $SUDO dpkg -i package.deb
-    rm package.deb
+    # Download and install the package
+    if [ -n "$package_name" ]; then
+        echo -n "Fetching $url: "
+        curl -L -o "$package_name" "$url"
+        echo "done"
+        echo "Installing package"
+        $installer_command "$package_name"
+        rm "$package_name"
+    fi
 }
 
 # Main installation process
