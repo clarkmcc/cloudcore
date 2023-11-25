@@ -59,10 +59,16 @@ install_package() {
 
     echo "Installing version $version for $os on $arch architecture"
 
+    # 64-bit Debian
     if [ "$os" = "debian" ] && [ "$arch" = "x86_64" ]; then
         url="${base_url}/cloudcored_${version}_linux_amd64.deb"
+    # 64-bit ARM Debian
     elif [ "$os" = "debian" ] && [ "$arch" = "aarch64" ]; then
         url="${base_url}/cloudcored_${version}_linux_arm64.deb"
+    # 64-bit RHEL/CentOS
+    elif [ "$os" = "rhel" ] && [ "$arch" = "aarch64" ]; then
+        url="${base_url}/cloudcored_${version}_linux_arm64.deb"
+    # ARM5 Debian
     elif [ "$os" = "debian" ] && [ "$arch" = "armv7l" ]; then
         url="${base_url}/cloudcored_${version}_linux_arm5.deb"
     # Add more cases for different OS and architecture combinations
