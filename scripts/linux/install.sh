@@ -57,24 +57,23 @@ install_package() {
     local base_url="https://github.com/clarkmcc/cloudcore/releases/download/${version}"
     local package_name=""
     local installer_command=""
+    local package_extension=""
 
     echo "Installing version $version for $os on $arch architecture"
 
-    # Determine the package name and installer command based on OS and architecture
+    # Determine the package name, extension, and installer command based on OS and architecture
     if [ "$os" = "debian" ]; then
-        if [ "$arch" = "x86_64" ]; then
-            package_name="cloudcored_${version}_linux_amd64.deb"
-            installer_command="sudo dpkg -i"
-        elif [ "$arch" = "aarch64" ]; then
-            package_name="cloudcored_${version}_linux_arm64.deb"
-            installer_command="sudo dpkg -i"
-        elif [ "$arch" = "armv7l" ]; then
-            package_name="cloudcored_${version}_linux_arm5.deb"
-            installer_command="sudo dpkg -i"
-        fi
+        package_extension=".deb"
+        installer_command="sudo dpkg -i"
+        case $arch in
+            x86_64) package_name="cloudcored_${version}_linux_amd64${package_extension}" ;;
+            aarch64) package_name="cloudcored_${version}_linux_arm64${package_extension}" ;;
+            armv7l) package_name="cloudcored_${version}_linux_arm5${package_extension}" ;;
+        esac
     elif [ "$os" = "rhel" ] && [ "$arch" = "aarch64" ]; then
-        package_name="cloudcored_${version}_linux_aarch64.rpm"
+        package_extension=".rpm"
         installer_command="sudo rpm -i"
+        package_name="cloudcored_${version}_linux_aarch64${package_extension}"
     else
         echo "Unsupported OS or architecture: $os, $arch"
         return
