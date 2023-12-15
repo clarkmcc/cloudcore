@@ -2,4 +2,4 @@ FROM scratch
 
 COPY cloudcore /cloudcore
 
-ENTRYPOINT ["cloudcore"]
+ENTRYPOINT ["/cloudcore"]

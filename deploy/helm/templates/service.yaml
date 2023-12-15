@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-server-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.agentServer.port }}
+      targetPort: {{ .Values.service.agentServer.port }}
+  selector:
+    app: cloudcore
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-server-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.appServer.port }}
+      targetPort: {{ .Values.service.appServer.port }}
+  selector:
+    app: cloudcore

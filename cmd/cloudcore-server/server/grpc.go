@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/clarkmcc/brpc"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/config"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/database"
 	"github.com/clarkmcc/cloudcore/cmd/cloudcore-server/services"
-	"github.com/clarkmcc/cloudcore/internal/example"
+	"github.com/clarkmcc/cloudcore/internal/envtls"
 	"github.com/clarkmcc/cloudcore/internal/rpc"
 	"github.com/clarkmcc/cloudcore/internal/token"
 	"github.com/quic-go/quic-go"
@@ -39,7 +40,11 @@ func New(
 
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
-			l, err := quic.ListenAddr(":"+strconv.Itoa(config.AgentServer.Port), example.TLSConfig(), nil)
+			cfg, err := envtls.TLSConfig()
+			if err != nil {
+				return fmt.Errorf("getting tls config: %w", err)
+			}
+			l, err := quic.ListenAddr(":"+strconv.Itoa(config.AgentServer.Port), cfg, nil)
 			if err != nil {
 				return err
 			}

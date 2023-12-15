@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudcore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudcore
+  template:
+    metadata:
+      labels:
+        app: cloudcore
+    spec:
+      containers:
+        - name: cloudcore
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.agentServer.port }}
+            - containerPort: {{ .Values.service.appServer.port }}
+          env:
+            - name: AGENT_SERVER_PORT
+              value: "{{ .Values.env.agentServerPort }}"
+            - name: APP_SERVER_PORT
+              value: "{{ .Values.env.appServerPort }}"
+            - name: AUTH0_DOMAIN
+              value: "{{ .Values.env.auth0Domain }}"
+            - name: AUTH0_AUDIENCE
+              value: "{{ .Values.env.auth0Audience }}"
+            - name: LOGGING_LEVEL
+              value: "{{ .Values.env.loggingLevel }}"
+            - name: AUTH_TOKEN_SIGNING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcore-secret
+                  key: authTokenSigningSecret
+            - name: DATABASE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcore-secret
+                  key: databaseConnectionString
